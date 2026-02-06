@@ -1,249 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Welcome</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <nav>
-      <a href="#" class="logo">LOGO</a>
-      <div class="nav-items">
-        <a class="nav-link" href="#features">Features</a>
-        <a class="nav-link" href="#pricing">Pricing</a>
-        <a class="nav-link" href="#cta">Download</a>
-      </div>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Self-Service Knowledge Base</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .hero-section { background: linear-gradient(135deg, #0d6efd, #003d99); color: white; padding: 60px 0; }
+        .card { transition: transform 0.2s; border: none; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .category-pill { cursor: pointer; }
+    </style>
+</head>
+<body class="bg-light">
 
-      <div class="menu-icon">
-        <img src="images/menu-icon.svg" alt="" />
-      </div>
-    </nav>
-
-    <div class="mobile-nav-menu">
-      <a class="nav-link" href="#features">Features</a>
-      <a class="nav-link" href="#pricing">Pricing</a>
-      <a class="nav-link" href="#cta">Download</a>
-    </div>
-
-    <header>
-      <div class="container">
-        <div class="left">
-          <h1>Simplified Task Management</h1>
-          <p>
-            Streamline your productivity and stay organized with our powerful
-            task management app
-          </p>
-
-          <div class="buttons">
-            <a href="#" class="download-btn">
-              <div class="btn-icon">
-                <img src="images/appstore-logo.svg" alt="" />
-              </div>
-              <div class="btn-text">
-                <div>Get It On</div>
-                <div>App Store</div>
-              </div>
-            </a>
-
-            <a href="#" class="download-btn">
-              <div class="btn-icon">
-                <img src="images/google-play-icon.svg" alt="" />
-              </div>
-              <div class="btn-text">
-                <div>Download It On</div>
-                <div>Google Play</div>
-              </div>
-            </a>
-          </div>
-        </div>
-
-        <div class="right">
-          <img src="images/hero-image.png" alt="" />
-        </div>
-      </div>
-    </header>
-
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <section id="featured">
-        <h2>Featured on</h2>
-        <div class="content">
-          <div class="logos">
-            <img src="images/hubspot-logo.svg" alt="" />
-            <img src="images/pinterest-logo.svg" alt="" />
-            <img src="images/reddit-logo.svg" alt="" />
-            <img src="images/spotify-logo.svg" alt="" />
-          </div>
-        </div>
-      </section>
+        <a class="navbar-brand" href="#"><i class="bi bi-cpu-fill me-2"></i>IT Help Center</a>
+        <a href="admin-login.html" class="btn btn-outline-light btn-sm">สำหรับ Admin</a>
+    </div>
+</nav>
 
-      <section id="features">
-        <h2>Features</h2>
-        <div class="content">
-          <!-- <div class="feature-card">
-            <div class="icon">
-              <img src="images/create-task-icon.svg" alt="" />
+<section class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-5 fw-bold">สวัสดีครับ มีอะไรให้เราช่วยไหม?</h1>
+        <p class="lead mb-4">ค้นหาวิธีแก้ไขปัญหา IT เบื้องต้นด้วยตัวคุณเอง</p>
+        <div class="col-md-7 mx-auto">
+            <div class="input-group input-group-lg shadow-sm">
+                <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control border-0" placeholder="พิมพ์ปัญหาที่พบ เช่น 'ต่อ WiFi ไม่ได้', 'ลงโปรแกรม'...">
             </div>
-            <h3>Intuitive Task Creation</h3>
-            <p>
-              Easily create and manage tasks with a simple and user-friendly
-              interface.
-            </p>
-          </div> -->
         </div>
-      </section>
+    </div>
+</section>
 
-      <section id="testimonials">
-        <div class="content">
-          <div class="left">
-            <h2>What our customers say about the app</h2>
-            <p>There are already more than 100k+ customers using our app.</p>
-          </div>
-
-          <div class="right">
-            <div class="testimonial-card">
-              <span class="quote-icon">
-                <img src="images/quote-icon.svg" alt="" />
-              </span>
-
-              <p class="review">
-                Since I started using the app, my productivity has skyrocketed.
-                The reminder feature keeps me on track. Highly recommended!
-              </p>
-
-              <div class="reviewer-info">
-                <div class="image">
-                  <img src="images/testimonial1.png" alt="" />
-                </div>
-
-                <div class="details">
-                  <div class="name">John Smith</div>
-                  <div class="designation">Tech Lead, Amazon</div>
-                </div>
-              </div>
-            </div>
-          </div>
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold">บทความแนะนำ</h4>
+        <div>
+            <span class="badge rounded-pill bg-primary category-pill px-3 py-2">ทั้งหมด</span>
+            <span class="badge rounded-pill bg-secondary category-pill px-3 py-2">Hardware</span>
+            <span class="badge rounded-pill bg-secondary category-pill px-3 py-2">Software</span>
         </div>
-
-        <div class="navigation-btns">
-          <div class="prev-btn">
-            <img src="images/chevron-left.svg" alt="" />
-          </div>
-          <div class="next-btn">
-            <img src="images/chevron-right.svg" alt="" />
-          </div>
-        </div>
-
-        <span class="bg-element"></span>
-      </section>
-
-      <section id="pricing">
-        <h2>Flexible Pricing Options</h2>
-        <div class="content">
-          <!-- <div class="plan">
-            <h4 class="plan-name">Basic</h4>
-            <ul class="plan-features">
-              <li>50 Tasks</li>
-              <li>Deadline Tracking</li>
-              <li>Priority Settings</li>
-              <li>Basic Reporting</li>
-              <li>Email Notifications</li>
-              <li>24/7 Customer Support</li>
-            </ul>
-            <div class="plan-price">Free</div>
-            <a href="#" class="btn">Choose</a>
-          </div> -->
-        </div>
-      </section>
-
-      <section id="cta">
-        <h2>Get Started Today</h2>
-        <div class="content">
-          <p>
-            Take control of your tasks and boost your productivity. Get started
-            today and experience the power of efficient task management
-          </p>
-
-          <div class="buttons">
-            <a href="#" class="download-btn">
-              <div class="btn-icon">
-                <img src="images/appstore-logo.svg" alt="" />
-              </div>
-              <div class="btn-text">
-                <div>Get It On</div>
-                <div>App Store</div>
-              </div>
-            </a>
-
-            <a href="#" class="download-btn">
-              <div class="btn-icon">
-                <img src="images/google-play-icon.svg" alt="" />
-              </div>
-              <div class="btn-text">
-                <div>Download It On</div>
-                <div>Google Play</div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </section>
     </div>
 
-    <footer>
-      <div class="container">
-        <div class="content">
-          <div class="left">
-            <div class="logo">LOGO</div>
-            <p>Best Task Management App</p>
-          </div>
-
-          <div class="right">
-            <div class="links">
-              <h3>Quick Links</h3>
-              <ul>
-                <li>
-                  <a href="#">About Us</a>
-                </li>
-
-                <li>
-                  <a href="#">Privacy Policy</a>
-                </li>
-
-                <li>
-                  <a href="#">Terms & Conditions</a>
-                </li>
-              </ul>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="text-primary mb-2 small fw-bold text-uppercase">Software</div>
+                    <h5 class="card-title fw-bold">วิธีตั้งค่า Outlook สำหรับอีเมลบริษัท</h5>
+                    <p class="card-text text-muted small">ขั้นตอนการตั้งค่า IMAP/SMTP สำหรับพนักงานใหม่...</p>
+                    <a href="article-detail.html" class="stretched-link text-decoration-none small fw-bold">อ่านต่อ <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-muted small">อัปเดตเมื่อ: 2 ชม. ที่แล้ว</div>
             </div>
-
-            <div class="links">
-              <h3>Contact Us</h3>
-              <ul>
-                <li>+1 (555) 123-4567</li>
-                <li>contact@example.com</li>
-                <li>123 Main Street, City, State, ZIP</li>
-              </ul>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="text-danger mb-2 small fw-bold text-uppercase">Hardware</div>
+                    <h5 class="card-title fw-bold">แก้ปัญหาเครื่องพิมพ์กระดาษติด (Jam)</h5>
+                    <p class="card-text text-muted small">วิธีเปิดฝาเครื่องและดึงกระดาษออกอย่างถูกวิธีโดยไม่ทำให้ลูกยางพัง...</p>
+                    <a href="#" class="stretched-link text-decoration-none small fw-bold">อ่านต่อ <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-muted small">อัปเดตเมื่อ: 1 วันที่แล้ว</div>
             </div>
-          </div>
         </div>
-
-        <div class="copyright">
-          <p>Designed by Live Blogger © 2023</p>
-          <div class="socials">
-            <a href="#"><img src="images/facebook-logo.svg" alt="" /></a>
-            <a href="#"><img src="images/instagram-logo.svg" alt="" /></a>
-            <a href="#"><img src="images/twitter-logo.svg" alt="" /></a>
-          </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="text-primary mb-2 small fw-bold text-uppercase">Software</div>
+                    <h5 class="card-title fw-bold">วิธีรีเซ็ต Password VPN ด้วยตนเอง</h5>
+                    <p class="card-text text-muted small">ไม่ต้องรอ Ticket! คุณสามารถรีเซ็ตรหัสผ่านผ่านระบบ Self-Service...</p>
+                    <a href="#" class="stretched-link text-decoration-none small fw-bold">อ่านต่อ <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-muted small">อัปเดตเมื่อ: 3 วันที่แล้ว</div>
+            </div>
         </div>
-      </div>
-    </footer>
+    </div>
+</div>
 
-    <script src="main.js"></script>
-  </body>
+<footer class="text-center py-4 text-muted border-top">
+    <small>&copy; 2024 IT Department - Knowledge Base System</small>
+</footer>
+
+</body>
 </html>
