@@ -1,6 +1,8 @@
 import { supabase } from './supabase-config.js';
 
-// --- Login Check ---
+// ==========================================
+// 1. Authentication & Init
+// ==========================================
 if (!localStorage.getItem('admin_token')) {
     document.getElementById('loginModal').style.display = 'block';
 } else {
@@ -8,7 +10,6 @@ if (!localStorage.getItem('admin_token')) {
     loadTable();
 }
 
-// --- Auth ---
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('user').value;
@@ -31,7 +32,9 @@ document.getElementById('regForm')?.addEventListener('submit', async (e) => {
     else { alert('Error: ' + error.message); }
 });
 
-// --- Update Dashboard Stats (ตัวเลขสรุปยอด) ---
+// ==========================================
+// 2. Dashboard Stats
+// ==========================================
 function updateStats(data) {
     document.getElementById('statTotal').innerText = data.length;
     document.getElementById('statHardware').innerText = data.filter(i => i.category === 'Hardware').length;
@@ -39,24 +42,24 @@ function updateStats(data) {
     document.getElementById('statNetwork').innerText = data.filter(i => i.category === 'Network').length;
 }
 
-// --- Load Table ---
+// ==========================================
+// 3. Table Management
+// ==========================================
 async function loadTable() {
     const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>';
     
     const { data } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
     
-    // อัปเดตตัวเลข
     if(data) updateStats(data);
 
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2" class="text-center">ไม่มีข้อมูล</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-muted">ไม่มีข้อมูล</td></tr>';
         return;
     }
 
     data.forEach(item => {
-        // Badge สีหมวดหมู่
         let badgeClass = 'bg-secondary';
         if(item.category === 'Hardware') badgeClass = 'bg-danger';
         if(item.category === 'Software') badgeClass = 'bg-info text-dark';
@@ -64,23 +67,32 @@ async function loadTable() {
 
         tbody.innerHTML += `
             <tr>
-                <td>
-                    <span class="badge ${badgeClass} me-1">${item.category}</span>
-                    ${item.title}
+                <td class="ps-3">
+                    <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">${item.title}</div>
+                    <span class="badge ${badgeClass} opacity-75" style="font-size:0.7rem;">${item.category}</span>
                 </td>
                 <td class="text-center">
-                    <a href="article.html?id=${item.id}" target="_blank" class="btn btn-sm btn-info text-white" title="ดู"><i class="bi bi-eye"></i></a>
-                    <button onclick="editItem(${item.id})" class="btn btn-sm btn-warning" title="แก้"><i class="bi bi-pencil"></i></button>
-                    <button onclick="delItem(${item.id})" class="btn btn-sm btn-danger" title="ลบ"><i class="bi bi-trash"></i></button>
+                    <a href="article.html?id=${item.id}" target="_blank" class="btn btn-sm btn-light border text-info me-1" title="ดูตัวอย่าง">
+                        <i class="bi bi-eye-fill"></i>
+                    </a>
+                    <button onclick="editItem(${item.id})" class="btn btn-sm btn-light border text-warning me-1" title="แก้ไข">
+                        <i class="bi bi-pencil-fill"></i>
+                    </button>
+                    <button onclick="delItem(${item.id})" class="btn btn-sm btn-light border text-danger" title="ลบ">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
                 </td>
             </tr>`;
     });
 }
 
-// --- Add / Edit Logic ---
+// ==========================================
+// 4. Add / Edit Logic
+// ==========================================
 document.getElementById('addForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
+    const oldText = btn.innerText;
     btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
 
     try {
@@ -88,6 +100,7 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
         const file = document.getElementById('inpImg').files[0];
         let imageUrl = null;
 
+        // อัปโหลดรูปปก (ถ้ามี)
         if (file) {
             const fileName = Date.now() + '-' + file.name;
             const { error } = await supabase.storage.from('images').upload(fileName, file);
@@ -108,11 +121,11 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
 
         if (editId) {
             await supabase.from('articles').update(payload).eq('id', editId);
-            alert('แก้ไขเรียบร้อย');
+            alert('แก้ไขข้อมูลเรียบร้อย');
         } else {
             payload.status = 'Published';
             await supabase.from('articles').insert(payload);
-            alert('บันทึกสำเร็จ');
+            alert('เพิ่มบทความสำเร็จ');
         }
         cancelEdit();
         loadTable();
@@ -120,11 +133,11 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
     } catch (err) {
         alert('Error: ' + err.message);
     } finally {
-        btn.innerText = editId ? "อัปเดต" : "บันทึก"; 
-        btn.disabled = false;
+        btn.innerText = oldText; btn.disabled = false;
     }
 });
 
+// ฟังก์ชันดึงข้อมูลมาแก้ไข
 window.editItem = async (id) => {
     const { data } = await supabase.from('articles').select('*').eq('id', id).single();
     if (data) {
@@ -135,27 +148,87 @@ window.editItem = async (id) => {
         document.getElementById('inpSol').value = data.solution;
         document.getElementById('inpVid').value = data.video_url || '';
         
-        document.getElementById('formHeader').innerText = "แก้ไขบทความ";
-        document.getElementById('submitBtn').innerText = "อัปเดต";
-        document.getElementById('submitBtn').classList.replace('btn-primary', 'btn-warning');
+        document.getElementById('formHeader').innerHTML = `<i class="bi bi-pencil-square text-warning"></i> แก้ไขบทความ`;
+        document.getElementById('submitBtn').innerText = "อัปเดตข้อมูล";
+        document.getElementById('submitBtn').classList.replace('btn-dark', 'btn-warning');
         document.getElementById('cancelBtn').classList.remove('d-none');
-        window.scrollTo(0,0);
+        
+        // Scroll ไปบนสุด
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
+// ฟังก์ชันยกเลิกแก้ไข
 window.cancelEdit = () => {
     document.getElementById('addForm').reset();
     document.getElementById('editId').value = '';
     
-    document.getElementById('formHeader').innerText = "เพิ่มบทความใหม่";
-    document.getElementById('submitBtn').innerText = "บันทึก";
-    document.getElementById('submitBtn').classList.replace('btn-warning', 'btn-primary');
+    document.getElementById('formHeader').innerHTML = `<i class="bi bi-plus-lg"></i> เพิ่มบทความใหม่`;
+    document.getElementById('submitBtn').innerText = "บันทึกข้อมูล";
+    document.getElementById('submitBtn').classList.replace('btn-warning', 'btn-dark');
     document.getElementById('cancelBtn').classList.add('d-none');
 }
 
+// ฟังก์ชันลบ
 window.delItem = async (id) => {
     if(confirm('ยืนยันลบ?')) {
         await supabase.from('articles').delete().eq('id', id);
         loadTable();
     }
 }
+
+// ==========================================
+// 5. [NEW] Insert Image Logic (แทรกรูประหว่างข้อความ)
+// ==========================================
+const insertFileConfig = document.getElementById('insertImgFile');
+const textareaSol = document.getElementById('inpSol');
+
+insertFileConfig?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // เปลี่ยนปุ่มเป็น Loading
+    const btn = e.target.nextElementSibling;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> อัปโหลด...`;
+    btn.disabled = true;
+
+    try {
+        // 1. อัปโหลดรูป content_...
+        const fileName = `content_${Date.now()}_${file.name}`;
+        const { error } = await supabase.storage.from('images').upload(fileName, file);
+
+        if (error) throw error;
+
+        // 2. ดึงลิงก์รูป
+        const { data: urlData } = supabase.storage.from('images').getPublicUrl(fileName);
+        const imgUrl = urlData.publicUrl;
+
+        // 3. สร้าง Tag HTML สำหรับรูปภาพ
+        const imgTag = `\n<img src="${imgUrl}" class="img-fluid rounded shadow-sm my-3 d-block mx-auto" style="max-width:100%; max-height:400px;">\n`;
+
+        // 4. แทรกรูปลงใน Textarea ตรงตำแหน่ง Cursor
+        if (textareaSol.selectionStart || textareaSol.selectionStart == '0') {
+            const startPos = textareaSol.selectionStart;
+            const endPos = textareaSol.selectionEnd;
+            textareaSol.value = textareaSol.value.substring(0, startPos)
+                + imgTag
+                + textareaSol.value.substring(endPos, textareaSol.value.length);
+            
+            // ย้ายเคอร์เซอร์ไปหลังรูปที่เพิ่งแทรก
+            textareaSol.selectionStart = startPos + imgTag.length;
+            textareaSol.selectionEnd = startPos + imgTag.length;
+        } else {
+            textareaSol.value += imgTag;
+        }
+        textareaSol.focus();
+
+    } catch (err) {
+        alert('เกิดข้อผิดพลาดในการแทรกรูป: ' + err.message);
+    } finally {
+        // คืนค่าปุ่มเดิม
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        insertFileConfig.value = ''; // Reset input
+    }
+});
