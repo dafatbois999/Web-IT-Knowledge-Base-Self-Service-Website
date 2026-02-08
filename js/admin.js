@@ -8,7 +8,7 @@ if (!localStorage.getItem('admin_token')) {
     loadTable();
 }
 
-// 2. ระบบ Login / Logout / Register (เหมือนเดิม)
+// 2. ระบบ Login
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('user').value;
@@ -17,7 +17,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     if (data) { localStorage.setItem('admin_token', 'true'); location.reload(); } else { alert('รหัสผิด!'); }
 });
 
-document.getElementById('regForm').addEventListener('submit', async (e) => {
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('admin_token');
+    location.reload();
+});
+
+// Register Modal Logic
+document.getElementById('regForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('regUser').value;
     const p = document.getElementById('regPass').value;
@@ -26,13 +32,7 @@ document.getElementById('regForm').addEventListener('submit', async (e) => {
     else { alert('Error: ' + error.message); }
 });
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('admin_token');
-    location.reload();
-});
-
-
-// 3. [ไฮไลท์] ระบบบันทึก (รองรับทั้ง เพิ่มใหม่ และ แก้ไข)
+// 3. ระบบบันทึก (Add/Edit)
 document.getElementById('addForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
@@ -40,11 +40,10 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
     btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
 
     try {
-        const editId = document.getElementById('editId').value; // เช็คว่ามี ID ไหม
+        const editId = document.getElementById('editId').value;
         const file = document.getElementById('inpImg').files[0];
         let imageUrl = null;
 
-        // ถ้ามีการเลือกไฟล์ใหม่ ให้อัปโหลด
         if (file) {
             const fileName = Date.now() + '-' + file.name;
             const { error } = await supabase.storage.from('images').upload(fileName, file);
@@ -54,7 +53,6 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
             }
         }
 
-        // เตรียมข้อมูลที่จะบันทึก
         const payload = {
             title: document.getElementById('inpTitle').value,
             category: document.getElementById('inpCat').value,
@@ -62,24 +60,22 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
             solution: document.getElementById('inpSol').value,
             video_url: document.getElementById('inpVid').value,
         };
-        // ถ้ามีรูปใหม่ให้อัปเดตลิงก์รูปด้วย
         if (imageUrl) payload.image_url = imageUrl;
 
-
         if (editId) {
-            // --- กรณีแก้ไข (Update) ---
+            // Update
             const { error } = await supabase.from('articles').update(payload).eq('id', editId);
             if (error) throw error;
             alert('แก้ไขข้อมูลเรียบร้อย!');
         } else {
-            // --- กรณีเพิ่มใหม่ (Insert) ---
-            payload.status = 'Published'; // เพิ่มสถานะเฉพาะตอนสร้างใหม่
+            // Insert
+            payload.status = 'Published';
             const { error } = await supabase.from('articles').insert(payload);
             if (error) throw error;
             alert('เพิ่มบทความใหม่เรียบร้อย!');
         }
 
-        cancelEdit(); // ล้างฟอร์ม
+        cancelEdit();
         loadTable();
 
     } catch (err) {
@@ -90,29 +86,45 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
     }
 });
 
-
-// 4. โหลดตาราง
+// 4. [อัปเดตใหม่] โหลดตาราง + ปุ่ม Preview
 async function loadTable() {
     const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center p-3 text-muted">กำลังโหลดข้อมูล...</td></tr>';
+    
     const { data } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
     
     tbody.innerHTML = '';
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center p-3">ยังไม่มีข้อมูล</td></tr>';
+        return;
+    }
+
     data.forEach(item => {
         tbody.innerHTML += `
             <tr>
-                <td class="ps-4 text-truncate" style="max-width: 200px;">${item.title}</td>
+                <td class="ps-4 text-truncate" style="max-width: 200px;">
+                    <div class="fw-bold text-dark">${item.title}</div>
+                    <small class="text-muted badge bg-light text-secondary border">${item.category}</small>
+                </td>
                 <td class="text-end pe-4">
-                    <button onclick="editItem(${item.id})" class="btn btn-sm btn-warning text-dark me-1"><i class="bi bi-pencil-square"></i></button>
-                    <button onclick="delItem(${item.id})" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    <a href="article.html?id=${item.id}" target="_blank" class="btn btn-sm btn-info text-white me-1" title="ดูหน้าเว็บจริง">
+                        <i class="bi bi-eye-fill"></i>
+                    </a>
+
+                    <button onclick="editItem(${item.id})" class="btn btn-sm btn-warning text-dark me-1" title="แก้ไข">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+
+                    <button onclick="delItem(${item.id})" class="btn btn-sm btn-outline-danger" title="ลบ">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </td>
             </tr>`;
     });
 }
 
-// 5. [ใหม่] ฟังก์ชันกดปุ่มแก้ไข
+// 5. Edit Function
 window.editItem = async (id) => {
-    // ดึงข้อมูลเก่ามาใส่ฟอร์ม
     const { data } = await supabase.from('articles').select('*').eq('id', id).single();
     if (data) {
         document.getElementById('editId').value = data.id;
@@ -122,24 +134,21 @@ window.editItem = async (id) => {
         document.getElementById('inpSol').value = data.solution;
         document.getElementById('inpVid').value = data.video_url || '';
         
-        // ปรับหน้าตาฟอร์มให้รู้ว่ากำลังแก้
         document.getElementById('formHeader').innerHTML = `<i class="bi bi-pencil-square"></i> แก้ไขบทความ ID: ${id}`;
         document.getElementById('formHeader').classList.add('text-warning');
         document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle"></i> อัปเดตข้อมูล';
         document.getElementById('submitBtn').classList.replace('btn-primary', 'btn-warning');
-        document.getElementById('cancelBtn').classList.remove('d-none'); // โชว์ปุ่มยกเลิก
+        document.getElementById('cancelBtn').classList.remove('d-none');
         
-        // เลื่อนหน้าจอขึ้นไปหาฟอร์ม
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
-// 6. [ใหม่] ฟังก์ชันยกเลิกการแก้ไข
+// 6. Cancel Edit
 window.cancelEdit = () => {
     document.getElementById('addForm').reset();
     document.getElementById('editId').value = '';
     
-    // คืนค่าหน้าตาฟอร์ม
     document.getElementById('formHeader').innerHTML = '<i class="bi bi-plus-circle"></i> เพิ่มบทความใหม่';
     document.getElementById('formHeader').classList.remove('text-warning');
     document.getElementById('submitBtn').innerHTML = '<i class="bi bi-save"></i> บันทึก';
@@ -147,7 +156,7 @@ window.cancelEdit = () => {
     document.getElementById('cancelBtn').classList.add('d-none');
 }
 
-// 7. ลบข้อมูล
+// 7. Delete Function
 window.delItem = async (id) => {
     if(confirm('ยืนยันลบ?')) {
         await supabase.from('articles').delete().eq('id', id);
