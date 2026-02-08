@@ -1,14 +1,14 @@
 import { supabase } from './supabase-config.js';
 
-// 1. เช็ค Login
+// --- Login Check ---
 if (!localStorage.getItem('admin_token')) {
     document.getElementById('loginModal').style.display = 'block';
 } else {
     document.getElementById('loginModal').style.display = 'none';
-    loadTable();
+    loadTable(); // โหลดข้อมูลทันที
 }
 
-// 2. ระบบ Login
+// --- Auth Functions ---
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('user').value;
@@ -22,7 +22,6 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     location.reload();
 });
 
-// Register Modal Logic
 document.getElementById('regForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('regUser').value;
@@ -32,11 +31,75 @@ document.getElementById('regForm')?.addEventListener('submit', async (e) => {
     else { alert('Error: ' + error.message); }
 });
 
-// 3. ระบบบันทึก (Add/Edit)
+
+// --- [ใหม่] ฟังก์ชันอัปเดต Dashboard Stats ---
+function updateStats(data) {
+    // นับจำนวนทั้งหมด
+    document.getElementById('statTotal').innerText = data.length;
+
+    // นับแยกหมวดหมู่
+    const hwCount = data.filter(item => item.category === 'Hardware').length;
+    const swCount = data.filter(item => item.category === 'Software').length;
+    const nwCount = data.filter(item => item.category === 'Network').length;
+
+    document.getElementById('statHardware').innerText = hwCount;
+    document.getElementById('statSoftware').innerText = swCount;
+    document.getElementById('statNetwork').innerText = nwCount;
+}
+
+
+// --- Main Functions (Load, Add, Edit, Delete) ---
+async function loadTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>';
+    
+    // ดึงข้อมูลทั้งหมด
+    const { data } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
+    
+    // [เรียกใช้] อัปเดตตัวเลข Dashboard
+    if(data) updateStats(data);
+
+    tbody.innerHTML = '';
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-muted">ไม่มีข้อมูล</td></tr>';
+        return;
+    }
+
+    data.forEach(item => {
+        // กำหนดสีป้ายหมวดหมู่
+        let badgeClass = 'bg-secondary';
+        if(item.category === 'Hardware') badgeClass = 'bg-danger';
+        if(item.category === 'Software') badgeClass = 'bg-info text-dark';
+        if(item.category === 'Network') badgeClass = 'bg-success';
+
+        tbody.innerHTML += `
+            <tr>
+                <td class="ps-4">
+                    <div class="fw-bold text-dark mb-1 text-truncate" style="max-width: 300px;">${item.title}</div>
+                    <span class="badge ${badgeClass} bg-opacity-10 border border-opacity-25 rounded-pill px-2" style="font-weight:500;">
+                        ${item.category}
+                    </span>
+                </td>
+                <td class="text-end pe-4">
+                    <a href="article.html?id=${item.id}" target="_blank" class="btn btn-sm btn-light text-primary border me-1" title="ดูตัวอย่าง">
+                        <i class="bi bi-eye-fill"></i>
+                    </a>
+                    <button onclick="editItem(${item.id})" class="btn btn-sm btn-light text-warning border me-1" title="แก้ไข">
+                        <i class="bi bi-pencil-fill"></i>
+                    </button>
+                    <button onclick="delItem(${item.id})" class="btn btn-sm btn-light text-danger border" title="ลบ">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+                </td>
+            </tr>`;
+    });
+}
+
+// ฟังก์ชันบันทึก (เพิ่ม/แก้ไข)
 document.getElementById('addForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
-    const originalText = btn.innerHTML;
+    const oldText = btn.innerText;
     btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
 
     try {
@@ -63,67 +126,23 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
         if (imageUrl) payload.image_url = imageUrl;
 
         if (editId) {
-            // Update
-            const { error } = await supabase.from('articles').update(payload).eq('id', editId);
-            if (error) throw error;
-            alert('แก้ไขข้อมูลเรียบร้อย!');
+            await supabase.from('articles').update(payload).eq('id', editId);
+            alert('แก้ไขเรียบร้อย');
         } else {
-            // Insert
             payload.status = 'Published';
-            const { error } = await supabase.from('articles').insert(payload);
-            if (error) throw error;
-            alert('เพิ่มบทความใหม่เรียบร้อย!');
+            await supabase.from('articles').insert(payload);
+            alert('เพิ่มสำเร็จ');
         }
-
         cancelEdit();
         loadTable();
 
     } catch (err) {
         alert('Error: ' + err.message);
     } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+        btn.innerText = oldText; btn.disabled = false;
     }
 });
 
-// 4. [อัปเดตใหม่] โหลดตาราง + ปุ่ม Preview
-async function loadTable() {
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '<tr><td colspan="2" class="text-center p-3 text-muted">กำลังโหลดข้อมูล...</td></tr>';
-    
-    const { data } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
-    
-    tbody.innerHTML = '';
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2" class="text-center p-3">ยังไม่มีข้อมูล</td></tr>';
-        return;
-    }
-
-    data.forEach(item => {
-        tbody.innerHTML += `
-            <tr>
-                <td class="ps-4 text-truncate" style="max-width: 200px;">
-                    <div class="fw-bold text-dark">${item.title}</div>
-                    <small class="text-muted badge bg-light text-secondary border">${item.category}</small>
-                </td>
-                <td class="text-end pe-4">
-                    <a href="article.html?id=${item.id}" target="_blank" class="btn btn-sm btn-info text-white me-1" title="ดูหน้าเว็บจริง">
-                        <i class="bi bi-eye-fill"></i>
-                    </a>
-
-                    <button onclick="editItem(${item.id})" class="btn btn-sm btn-warning text-dark me-1" title="แก้ไข">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
-
-                    <button onclick="delItem(${item.id})" class="btn btn-sm btn-outline-danger" title="ลบ">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            </tr>`;
-    });
-}
-
-// 5. Edit Function
 window.editItem = async (id) => {
     const { data } = await supabase.from('articles').select('*').eq('id', id).single();
     if (data) {
@@ -134,29 +153,26 @@ window.editItem = async (id) => {
         document.getElementById('inpSol').value = data.solution;
         document.getElementById('inpVid').value = data.video_url || '';
         
-        document.getElementById('formHeader').innerHTML = `<i class="bi bi-pencil-square"></i> แก้ไขบทความ ID: ${id}`;
-        document.getElementById('formHeader').classList.add('text-warning');
-        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle"></i> อัปเดตข้อมูล';
-        document.getElementById('submitBtn').classList.replace('btn-primary', 'btn-warning');
+        // ปรับ UI
+        document.getElementById('formHeader').innerHTML = `<span class="text-warning"><i class="bi bi-pencil-square"></i> แก้ไขบทความ</span>`;
+        document.getElementById('submitBtn').className = 'btn btn-warning w-100 fw-bold';
+        document.getElementById('submitBtn').innerText = 'อัปเดตข้อมูล';
         document.getElementById('cancelBtn').classList.remove('d-none');
-        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
-// 6. Cancel Edit
 window.cancelEdit = () => {
     document.getElementById('addForm').reset();
     document.getElementById('editId').value = '';
     
-    document.getElementById('formHeader').innerHTML = '<i class="bi bi-plus-circle"></i> เพิ่มบทความใหม่';
-    document.getElementById('formHeader').classList.remove('text-warning');
-    document.getElementById('submitBtn').innerHTML = '<i class="bi bi-save"></i> บันทึก';
-    document.getElementById('submitBtn').classList.replace('btn-warning', 'btn-primary');
+    // คืนค่า UI
+    document.getElementById('formHeader').innerHTML = `<i class="bi bi-plus-circle-fill text-primary"></i> เพิ่มบทความใหม่`;
+    document.getElementById('submitBtn').className = 'btn btn-primary w-100 fw-bold';
+    document.getElementById('submitBtn').innerText = 'บันทึกข้อมูล';
     document.getElementById('cancelBtn').classList.add('d-none');
 }
 
-// 7. Delete Function
 window.delItem = async (id) => {
     if(confirm('ยืนยันลบ?')) {
         await supabase.from('articles').delete().eq('id', id);
