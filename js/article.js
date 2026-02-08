@@ -2,7 +2,7 @@ import { supabase } from './supabase-config.js';
 
 const id = new URLSearchParams(window.location.search).get('id');
 
-// --- 1. Navbar Search Toggle (เพิ่มส่วนนี้เข้ามา) ---
+// --- 1. Navbar Search Toggle ---
 window.toggleSearch = () => {
     const box = document.getElementById('navSearchBox');
     const input = document.getElementById('navSearchInput');
@@ -14,16 +14,13 @@ window.toggleSearch = () => {
     }
 };
 
-// ถ้า User กด Enter ในช่องค้นหา ให้กลับไปหน้าแรกพร้อมคำค้น
 document.getElementById('navSearchInput')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        // (Optional) กลับไปหน้าแรกเพื่อค้นหา จริงๆ
         window.location.href = `index.html`; 
     }
 });
-// ---------------------------------------------------
 
-// --- 2. Load Content (โค้ดเดิม) ---
+// --- 2. Load Content ---
 async function loadDetail() {
     if (!id) {
         window.location.href = 'index.html';
@@ -41,17 +38,18 @@ async function loadDetail() {
 
         if (data) {
             document.getElementById('cat').innerText = data.category;
-            // ปรับสี Badge
+            
             let badgeClass = 'bg-primary';
             if (data.category === 'Hardware') badgeClass = 'bg-danger';
             if (data.category === 'Network') badgeClass = 'bg-success';
             if (data.category === 'Software') badgeClass = 'bg-info text-dark';
             
             document.getElementById('cat').className = `badge badge-custom mb-3 ${badgeClass}`;
-            
             document.getElementById('title').innerText = data.title;
-            document.getElementById('desc').innerText = data.content;
-            document.getElementById('sol').innerText = data.solution;
+
+            // [จุดที่แก้ไข] เปลี่ยน innerText -> innerHTML เพื่อให้แสดงรูปภาพได้
+            document.getElementById('desc').innerHTML = data.content; 
+            document.getElementById('sol').innerHTML = data.solution; 
 
             if (data.image_url) {
                 const img = document.getElementById('img');
@@ -62,6 +60,7 @@ async function loadDetail() {
             if (data.video_url) {
                 const url = data.video_url;
                 let videoId = "";
+                // รองรับลิงก์ YouTube หลายแบบ
                 if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
                 else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
 
