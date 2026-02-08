@@ -11,16 +11,42 @@
 <body>
     <div id="loader" class="loading-overlay"><div class="spinner-border text-primary"></div></div>
 
-    <nav class="navbar bg-white shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="index.html">
-                <i class="bi bi-hdd-network"></i> IT Support
-            </a>
-            <a href="admin.html" class="btn btn-outline-secondary btn-sm rounded-pill">
-                <i class="bi bi-shield-lock"></i> Admin
-            </a>
+<nav class="navbar navbar-expand-lg fixed-top transition-all" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary d-flex align-items-center gap-2" href="index.html">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                <i class="bi bi-hdd-network-fill"></i>
+            </div>
+            IT Support
+        </a>
+
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <i class="bi bi-list fs-2 text-dark"></i>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav align-items-center gap-3">
+                <li class="nav-item">
+                    <a class="nav-link text-dark fw-medium" href="index.html">หน้าแรก</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark fw-medium" href="admin.html">Admin</a>
+                </li>
+                
+                <li class="border-start mx-2 d-none d-lg-block" style="height: 20px;"></li>
+
+                <li class="nav-item position-relative d-flex align-items-center">
+                    <div id="navSearchBox" class="search-box-hidden">
+                        <input type="text" id="navSearchInput" class="form-control form-control-sm rounded-pill border-0 bg-light" placeholder="ค้นหา...">
+                    </div>
+                    <button onclick="toggleSearch()" class="btn btn-circle btn-light shadow-sm text-primary">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </li>
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>
 
     <header class="hero-header text-center">
         <div class="container">
@@ -71,3 +97,4 @@
     </script>
 </body>
 </html>
+
