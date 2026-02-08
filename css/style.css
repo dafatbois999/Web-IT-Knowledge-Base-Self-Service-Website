@@ -1,212 +1,31 @@
-/* 1. นำเข้าฟอนต์สวยๆ จาก Google Fonts (Sarabun) */
+/* Import Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
 
 :root {
     --primary-color: #0d6efd;
-    --secondary-color: #6c757d;
-    --success-color: #198754;
-    --bg-light: #f8f9fa;
     --card-radius: 15px;
 }
 
-/* 2. ตั้งค่า Global */
 body {
     font-family: 'Sarabun', sans-serif;
-    background-color: var(--bg-light);
+    background-color: #f8f9fa;
     color: #333;
     -webkit-font-smoothing: antialiased;
 }
 
-/* 3. Hero Header (ส่วนหัวหน้าแรก) */
-.hero-header {
-    background: linear-gradient(135deg, #0052cc 0%, #007bff 100%); /* ไล่สีน้ำเงิน */
-    color: white;
-    padding: 5rem 0 6rem 0;
-    margin-bottom: -3rem; /* ดึงเนื้อหาขึ้้นมาซ้อน */
-    border-radius: 0 0 50px 50px; /* โค้งด้านล่าง */
-    box-shadow: 0 10px 30px rgba(0, 82, 204, 0.2);
-}
-
-.hero-header h1 {
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* ช่องค้นหา */
-#searchInput {
-    height: 55px;
-    font-size: 1.1rem;
-    border: none;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
-}
-#searchInput:focus {
-    box-shadow: 0 5px 20px rgba(0,0,0,0.25) !important;
-    transform: translateY(-2px);
-    transition: all 0.3s;
-}
-
-/* ปุ่ม Keyword (คำค้นหายอดฮิต) */
-.pointer {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 500;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-.pointer:hover {
-    background-color: #e9ecef !important;
-    transform: translateY(-3px);
-    box-shadow: 0 5px 10px rgba(0,0,0,0.15);
-}
-
-/* 4. Card Design (การ์ดบทความ) */
-.card-hover {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    border-radius: var(--card-radius);
-    background: white;
-    overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.05);
-}
-
-.card-hover:hover {
-    transform: translateY(-8px); /* ลอยขึ้น */
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-    border-color: rgba(13, 110, 253, 0.3); /* ขอบสีฟ้าจางๆ */
-}
-
-/* รูปภาพในการ์ด */
-.card-img-top {
-    transition: transform 0.5s ease;
-}
-.card-hover:hover .card-img-top {
-    transform: scale(1.05); /* รูปขยายเล็กน้อย */
-}
-
-/* ป้ายหมวดหมู่ (Badge) */
-.badge-custom {
-    border-radius: 20px;
-    padding: 6px 12px;
-    font-weight: 500;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-}
-
-/* ตัดคำยาวๆ */
-.text-truncate-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* โชว์แค่ 2 บรรทัด */
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 3em; /* Fix ความสูงให้เท่ากัน */
-}
-
-/* 5. Live Search Animation (เอฟเฟกต์ตอนค้นหา) */
-.fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* 6. Admin Panel Styles */
-/* ทำให้หัวข้อฟอร์มติดอยู่ด้านบนเวลาเลื่อน */
-.sticky-top {
-    top: 20px;
-    z-index: 100;
-}
-
-/* Modal พื้นหลังเบลอ (Glassmorphism) */
-.modal-backdrop-custom {
-    backdrop-filter: blur(8px);
-    background-color: rgba(0, 0, 0, 0.6);
-}
-
-/* ตาราง Admin */
-.table-hover tbody tr:hover {
-    background-color: #f1f3f5;
-}
-.btn-sm {
-    border-radius: 6px;
-}
-
-/* 7. Article Detail Page (หน้าอ่านบทความ) */
-#content {
-    animation: slideUp 0.5s ease-out;
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* จัด Typography ให้อ่านง่าย */
-#desc, #sol {
-    font-size: 1.1rem;
-    line-height: 1.8;
-    color: #495057;
-}
-
-/* วิดีโอ Responsive */
-.ratio-16x9 {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-/* 8. Loading Spinner Overlay */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Responsive มือถือ */
-@media (max-width: 768px) {
-    .hero-header {
-        padding: 3rem 0 4rem 0;
-        border-radius: 0 0 30px 30px;
-    }
-    .hero-header h1 {
-        font-size: 1.8rem;
-    }
-    #searchInput {
-        height: 45px;
-        font-size: 1rem;
-    }
-}
-/* --- Navbar Styles --- */
+/* --- 1. Navbar Styles (ใหม่) --- */
 #mainNav {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px); /* พื้นหลังเบลอ */
-    padding: 15px 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 12px 0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease-in-out, padding 0.3s;
-}
-
-/* คลาสสำหรับซ่อน Navbar (เลื่อนขึ้นไปข้างบน) */
-.navbar-hidden {
-    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out; /* สำหรับ Slide */
 }
 
 /* ปุ่มแว่นขยายกลมๆ */
 .btn-circle {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -216,30 +35,101 @@ body {
 .btn-circle:hover {
     background-color: var(--primary-color);
     color: white !important;
-    transform: rotate(90deg); /* หมุนเท่ๆ */
 }
 
-/* --- Search Box Pop-out Effect --- */
+/* Search Box Animation (เด้งออกมา) */
 .search-box-hidden {
     width: 0;
     opacity: 0;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* เด้งดึ๋ง */
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
     margin-right: 5px;
 }
-
-/* คลาสที่จะใส่ด้วย JS เพื่อให้มันเด้งออกมา */
 .search-box-active {
-    width: 200px; /* ความกว้างตอนยืดออก */
+    width: 200px;
     opacity: 1;
 }
 
-/* Responsive: มือถือให้โชว์เต็ม */
+/* --- 2. Hero Header --- */
+.hero-header {
+    background: linear-gradient(135deg, #0052cc 0%, #007bff 100%);
+    color: white;
+    padding: 6rem 0 5rem 0; /* เพิ่ม Padding บนหลบ Navbar */
+    margin-bottom: 2rem;
+    border-radius: 0 0 50px 50px;
+    box-shadow: 0 10px 30px rgba(0, 82, 204, 0.2);
+}
+
+/* ช่องค้นหาหลัก */
+#searchInput {
+    height: 55px;
+    font-size: 1.1rem;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
+}
+#searchInput:focus {
+    transform: translateY(-2px);
+    transition: all 0.3s;
+}
+
+/* --- 3. Card Design --- */
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: var(--card-radius);
+    background: white;
+    overflow: hidden;
+}
+.card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+.card-img-top {
+    transition: transform 0.5s ease;
+}
+.card-hover:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+/* ป้ายหมวดหมู่ */
+.badge-custom {
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+/* --- 4. Animation --- */
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+    opacity: 0; /* เริ่มต้นซ่อนไว้ก่อน */
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ปุ่ม Keyword */
+.pointer {
+    cursor: pointer;
+    transition: 0.2s;
+}
+.pointer:hover {
+    background-color: #e9ecef !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: white; z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
+}
+
+/* Responsive */
 @media (max-width: 991px) {
     .search-box-hidden {
-        width: 100%;
-        opacity: 1;
-        margin-bottom: 10px;
+        width: 100%; opacity: 1; margin-bottom: 10px; /* มือถือโชว์เต็ม */
     }
-    .btn-circle { display: none; } /* ซ่อนปุ่มแว่นในมือถือเพราะโชว์ช่องเลย */
+    .btn-circle { display: none; }
 }
