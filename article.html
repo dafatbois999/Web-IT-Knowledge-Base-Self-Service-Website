@@ -9,8 +9,45 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container py-5">
-        <a href="index.html" class="btn btn-light rounded-pill mb-4 shadow-sm">
+
+    <div id="loader" class="loading-overlay" style="display:none;"> <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg fixed-top" id="mainNav">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="index.html" style="font-size: 1.4rem;">
+                IT Knowledge Base
+            </a>
+
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="bi bi-list fs-2 text-dark"></i>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center gap-3">
+                    <li class="nav-item">
+                        <a class="nav-link text-dark fw-medium" href="index.html">หน้าแรก</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark fw-medium" href="admin.html">Admin</a>
+                    </li>
+                    <li class="border-start mx-2 d-none d-lg-block" style="height: 20px;"></li>
+                    <li class="nav-item position-relative d-flex align-items-center">
+                        <div id="navSearchBox" class="search-box-hidden">
+                            <input type="text" id="navSearchInput" class="form-control form-control-sm rounded-pill border-0 bg-light" placeholder="ค้นหา...">
+                        </div>
+                        <button onclick="toggleSearch()" class="btn btn-circle btn-light shadow-sm text-primary">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5 mt-4">
+        
+        <a href="index.html" class="btn btn-light rounded-pill mb-4 shadow-sm px-4">
             <i class="bi bi-arrow-left"></i> กลับหน้าหลัก
         </a>
 
@@ -21,25 +58,19 @@
 
         <div id="content" class="bg-white p-4 p-md-5 rounded shadow-sm mx-auto" style="max-width: 800px; display:none;">
             
-            <span id="cat" class="badge bg-secondary mb-3 badge-custom" style="font-weight: normal; padding: 6px 12px;">Category</span>
+            <span id="cat" class="badge bg-secondary mb-3 badge-custom">Category</span>
             <h1 id="title" class="fw-bold mb-4">...</h1>
             
             <img id="img" src="" class="img-fluid rounded mb-5 w-100 d-none shadow-sm" style="max-height: 450px; object-fit: cover;">
             
-            <h5 class="text-danger fw-bold mb-3">
-                <i class="bi bi-exclamation-circle-fill"></i> ปัญหาที่พบ
-            </h5>
+            <h5 class="text-danger fw-bold mb-3"><i class="bi bi-exclamation-circle-fill"></i> ปัญหาที่พบ</h5>
             <div id="desc" class="text-secondary mb-5" style="font-size: 1.1rem; line-height: 1.6;"></div>
             
-            <h5 class="text-success fw-bold mb-3">
-                <i class="bi bi-check-circle-fill"></i> วิธีแก้ไข
-            </h5>
+            <h5 class="text-success fw-bold mb-3"><i class="bi bi-check-circle-fill"></i> วิธีแก้ไข</h5>
             <div id="sol" class="mb-5" style="white-space: pre-wrap; font-size: 1.1rem; line-height: 1.8;"></div>
 
             <div id="vidBox" class="d-none mt-4 pt-4 border-top">
-                <h5 class="fw-bold mb-3">
-                    <i class="bi bi-youtube text-danger"></i> วิดีโอ
-                </h5>
+                <h5 class="fw-bold mb-3"><i class="bi bi-youtube text-danger"></i> วิดีโอแนะนำ</h5>
                 <div class="ratio ratio-16x9 rounded overflow-hidden shadow-sm">
                     <iframe id="vid" src="" title="YouTube video" allowfullscreen></iframe>
                 </div>
@@ -52,4 +83,3 @@
     <script type="module" src="js/article.js"></script>
 </body>
 </html>
-
