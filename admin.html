@@ -6,184 +6,128 @@
     <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; }
-        
-        /* Stats Card Design */
-        .stat-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-            transition: transform 0.2s;
-        }
-        .stat-card:hover { transform: translateY(-5px); }
-        .icon-box {
-            width: 48px; height: 48px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        /* Table & Form Design */
-        .main-card {
-            border: none; border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-        }
-        .sticky-form { position: sticky; top: 20px; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; }
     </style>
 </head>
 <body>
 
-    <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; backdrop-filter: blur(5px);">
-        <div class="card shadow-lg p-4" style="width:350px; margin:100px auto; border-radius: 15px;">
-            <h4 class="text-center fw-bold mb-3">Admin Login</h4>
+    <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000;">
+        <div class="card p-4 mx-auto mt-5" style="width:350px;">
+            <h4 class="text-center mb-3">เข้าสู่ระบบ Admin</h4>
             <form id="loginForm">
-                <input id="user" class="form-control mb-3" placeholder="Username" required>
+                <input id="user" class="form-control mb-2" placeholder="Username" required>
                 <input type="password" id="pass" class="form-control mb-3" placeholder="Password" required>
-                <button class="btn btn-primary w-100 rounded-pill">เข้าสู่ระบบ</button>
+                <button class="btn btn-primary w-100">Login</button>
             </form>
         </div>
     </div>
 
     <div id="regModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1050;">
-        <div class="card shadow p-4" style="width:350px; margin:100px auto; border-radius: 15px;">
+        <div class="card p-4 mx-auto mt-5" style="width:350px;">
             <div class="d-flex justify-content-between mb-3">
-                <h5 class="fw-bold">เพิ่มผู้ดูแลใหม่</h5>
+                <h5>เพิ่มแอดมินใหม่</h5>
                 <button type="button" class="btn-close" onclick="document.getElementById('regModal').style.display='none'"></button>
             </div>
             <form id="regForm">
-                <input id="regUser" class="form-control mb-3" placeholder="Username" required>
+                <input id="regUser" class="form-control mb-2" placeholder="Username" required>
                 <input type="password" id="regPass" class="form-control mb-3" placeholder="Password" required>
-                <button class="btn btn-success w-100 rounded-pill">สร้างบัญชี</button>
+                <button class="btn btn-success w-100">ยืนยัน</button>
             </form>
         </div>
     </div>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
+    <nav class="navbar navbar-dark bg-dark mb-4">
         <div class="container">
-            <span class="navbar-brand fw-bold"><i class="bi bi-speedometer2"></i> Dashboard</span>
-            <div class="d-flex gap-2">
-                <button onclick="document.getElementById('regModal').style.display='block'" class="btn btn-light btn-sm rounded-pill text-primary fw-bold"><i class="bi bi-person-plus"></i> เพิ่มแอดมิน</button>
-                <a href="index.html" class="btn btn-outline-light btn-sm rounded-pill" target="_blank"><i class="bi bi-globe"></i> หน้าบ้าน</a>
-                <button id="logoutBtn" class="btn btn-danger btn-sm rounded-pill"><i class="bi bi-box-arrow-right"></i> Logout</button>
+            <span class="navbar-brand">Admin Panel</span>
+            <div>
+                <button onclick="document.getElementById('regModal').style.display='block'" class="btn btn-sm btn-outline-success me-1">เพิ่มแอดมิน</button>
+                <a href="index.html" class="btn btn-sm btn-outline-info me-1" target="_blank">ไปหน้าบ้าน</a>
+                <button id="logoutBtn" class="btn btn-sm btn-outline-danger">Logout</button>
             </div>
         </div>
     </nav>
 
-    <div class="container pb-5">
+    <div class="container">
         
-        <div class="row g-3 mb-4">
-            <div class="col-md-3 col-6">
-                <div class="card stat-card bg-white p-3 h-100">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-muted small mb-1">บทความทั้งหมด</p>
-                            <h3 class="fw-bold text-primary mb-0" id="statTotal">0</h3>
-                        </div>
-                        <div class="icon-box bg-primary bg-opacity-10 text-primary">
-                            <i class="bi bi-file-earmark-text"></i>
-                        </div>
-                    </div>
+        <div class="row g-3 mb-4 text-center">
+            <div class="col-6 col-md-3">
+                <div class="card bg-primary text-white p-3">
+                    <h3><i class="bi bi-files"></i> <span id="statTotal">0</span></h3>
+                    <small>บทความทั้งหมด</small>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card stat-card bg-white p-3 h-100">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-muted small mb-1">Hardware</p>
-                            <h3 class="fw-bold text-danger mb-0" id="statHardware">0</h3>
-                        </div>
-                        <div class="icon-box bg-danger bg-opacity-10 text-danger">
-                            <i class="bi bi-cpu"></i>
-                        </div>
-                    </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-danger text-white p-3">
+                    <h3><i class="bi bi-cpu"></i> <span id="statHardware">0</span></h3>
+                    <small>Hardware</small>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card stat-card bg-white p-3 h-100">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-muted small mb-1">Software</p>
-                            <h3 class="fw-bold text-info mb-0" id="statSoftware">0</h3>
-                        </div>
-                        <div class="icon-box bg-info bg-opacity-10 text-info">
-                            <i class="bi bi-window-desktop"></i>
-                        </div>
-                    </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-info text-dark p-3">
+                    <h3><i class="bi bi-window"></i> <span id="statSoftware">0</span></h3>
+                    <small>Software</small>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card stat-card bg-white p-3 h-100">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-muted small mb-1">Network</p>
-                            <h3 class="fw-bold text-success mb-0" id="statNetwork">0</h3>
-                        </div>
-                        <div class="icon-box bg-success bg-opacity-10 text-success">
-                            <i class="bi bi-router"></i>
-                        </div>
-                    </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-success text-white p-3">
+                    <h3><i class="bi bi-wifi"></i> <span id="statNetwork">0</span></h3>
+                    <small>Network</small>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4">
-            <div class="col-lg-4">
-                <div class="card main-card sticky-form">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                        <h5 class="fw-bold mb-0" id="formHeader"><i class="bi bi-plus-circle-fill text-primary"></i> เพิ่มบทความใหม่</h5>
-                    </div>
-                    <div class="card-body p-4">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-header bg-white fw-bold" id="formHeader">เพิ่มบทความใหม่</div>
+                    <div class="card-body">
                         <form id="addForm">
                             <input type="hidden" id="editId">
                             
-                            <label class="form-label small fw-bold text-muted">หัวข้อ</label>
-                            <input id="inpTitle" class="form-control mb-3" placeholder="หัวข้อปัญหา..." required>
+                            <label class="form-label small">หัวข้อ</label>
+                            <input id="inpTitle" class="form-control mb-2" required>
                             
-                            <label class="form-label small fw-bold text-muted">หมวดหมู่</label>
-                            <select id="inpCat" class="form-select mb-3">
+                            <label class="form-label small">หมวดหมู่</label>
+                            <select id="inpCat" class="form-select mb-2">
                                 <option>Hardware</option><option>Software</option><option>Network</option><option>Other</option>
                             </select>
                             
-                            <label class="form-label small fw-bold text-muted">รายละเอียด</label>
-                            <textarea id="inpDesc" class="form-control mb-3" rows="3" required></textarea>
+                            <label class="form-label small">รายละเอียด</label>
+                            <textarea id="inpDesc" class="form-control mb-2" rows="3" required></textarea>
                             
-                            <label class="form-label small fw-bold text-muted">วิธีแก้ไข</label>
-                            <textarea id="inpSol" class="form-control mb-3" rows="4" required></textarea>
+                            <label class="form-label small">วิธีแก้ไข</label>
+                            <textarea id="inpSol" class="form-control mb-2" rows="4" required></textarea>
                             
-                            <label class="form-label small fw-bold text-muted">YouTube / รูปภาพ</label>
-                            <input id="inpVid" class="form-control mb-2" placeholder="https://youtu.be/...">
-                            <input type="file" id="inpImg" class="form-control mb-4" accept="image/*">
+                            <label class="form-label small">ลิงก์ YouTube / รูปภาพ</label>
+                            <input id="inpVid" class="form-control mb-2" placeholder="URL วิดีโอ">
+                            <input type="file" id="inpImg" class="form-control mb-3">
                             
-                            <div class="d-grid gap-2">
-                                <button type="submit" id="submitBtn" class="btn btn-primary fw-bold py-2">บันทึกข้อมูล</button>
-                                <button type="button" id="cancelBtn" class="btn btn-light text-muted fw-bold py-2 d-none" onclick="cancelEdit()">ยกเลิก</button>
-                            </div>
+                            <button type="submit" id="submitBtn" class="btn btn-primary w-100">บันทึก</button>
+                            <button type="button" id="cancelBtn" class="btn btn-secondary w-100 mt-2 d-none" onclick="cancelEdit()">ยกเลิก</button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-8">
-                <div class="card main-card h-100">
-                    <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold mb-0"><i class="bi bi-list-task text-primary"></i> รายการทั้งหมด</h5>
-                        <button onclick="loadTable()" class="btn btn-light btn-sm rounded-pill px-3"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">รายการบทความ</span>
+                        <button onclick="loadTable()" class="btn btn-sm btn-light border">รีเฟรช</button>
                     </div>
                     <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th class="ps-4 py-3 text-muted" style="font-weight:600;">บทความ</th>
-                                        <th class="text-end pe-4 py-3 text-muted" style="font-weight:600; width:150px;">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableBody"></tbody>
-                            </table>
-                        </div>
+                        <table class="table table-bordered table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ชื่อบทความ</th>
+                                    <th style="width: 140px;" class="text-center">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
