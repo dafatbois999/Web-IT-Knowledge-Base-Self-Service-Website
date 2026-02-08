@@ -1,12 +1,17 @@
 import { supabase } from './supabase-config.js';
 
+// --- ตัวแปรหลัก ---
 const grid = document.getElementById('grid');
 const noResult = document.getElementById('noResult');
-let allData = []; // ตัวแปรเก็บข้อมูลทั้งหมด (เพื่อไม่ต้องโหลดใหม่ทุกครั้งที่ค้นหา)
+const loader = document.getElementById('loader');
+let allData = []; // เก็บข้อมูลทั้งหมดไว้ในตัวแปร (เพื่อให้ค้นหาเร็ว ไม่ต้องโหลดใหม่)
 
-// 1. โหลดข้อมูลทั้งหมดมาเก็บไว้ก่อน (Fetch Once)
+// ==========================================
+// 1. ส่วนโหลดข้อมูล (Data Loading)
+// ==========================================
 async function loadArticles() {
     try {
+        // ดึงข้อมูลบทความที่สถานะเป็น Published
         const { data, error } = await supabase
             .from('articles')
             .select('*')
@@ -16,77 +21,148 @@ async function loadArticles() {
         if (error) throw error;
 
         allData = data || [];
-        render(allData); // แสดงผลทั้งหมดตอนแรก
+        render(allData); // แสดงผลครั้งแรก
 
     } catch (err) {
-        console.error(err);
-        grid.innerHTML = `<p class="text-center text-danger">โหลดข้อมูลไม่สำเร็จ</p>`;
+        console.error("Error loading articles:", err);
+        grid.innerHTML = `<div class="col-12 text-center text-danger"><i class="bi bi-exclamation-triangle"></i> โหลดข้อมูลไม่สำเร็จ</div>`;
     } finally {
-        document.getElementById('loader').style.display = 'none';
+        // ปิดหน้าจอ Loading
+        if(loader) loader.style.display = 'none';
     }
 }
 
-// 2. ฟังก์ชันแสดงผล (Render Cards)
+// ==========================================
+// 2. ส่วนแสดงผล (Render Cards)
+// ==========================================
 function render(list) {
     grid.innerHTML = '';
     
+    // กรณีไม่พบข้อมูล
     if (list.length === 0) {
-        noResult.classList.remove('d-none'); // โชว์ว่าไม่พบ
+        if(noResult) noResult.classList.remove('d-none');
         return;
     } else {
-        noResult.classList.add('d-none');
+        if(noResult) noResult.classList.add('d-none');
     }
 
-    list.forEach(item => {
-        // เช็คว่ามีรูปไหม ถ้าไม่มีใช้รูป Placeholder
+    // วนลูปสร้างการ์ด
+    list.forEach((item, index) => {
+        // จัดการรูปภาพ (ถ้าไม่มีรูป ให้ใช้ Placeholder)
         const imgHTML = item.image_url 
-            ? `<img src="${item.image_url}" class="card-img-top" style="height:200px; object-fit:cover;">`
-            : `<div class="bg-light d-flex align-items-center justify-content-center text-muted" style="height:200px;"><i class="bi bi-image fs-1"></i></div>`;
+            ? `<img src="${item.image_url}" class="card-img-top" loading="lazy" style="height:200px; object-fit:cover;">`
+            : `<div class="bg-light d-flex align-items-center justify-content-center text-secondary" style="height:200px;"><i class="bi bi-image fs-1 opacity-25"></i></div>`;
 
-        // สร้างสีป้ายตามหมวดหมู่
-        let badgeColor = 'bg-primary';
-        if (item.category === 'Hardware') badgeColor = 'bg-danger';
-        if (item.category === 'Network') badgeColor = 'bg-success';
-        if (item.category === 'Software') badgeColor = 'bg-info text-dark';
+        // จัดการสีป้ายหมวดหมู่
+        let badgeColor = 'bg-primary'; // สีน้ำเงิน (Default)
+        if (item.category === 'Hardware') badgeColor = 'bg-danger'; // สีแดง
+        if (item.category === 'Network') badgeColor = 'bg-success'; // สีเขียว
+        if (item.category === 'Software') badgeColor = 'bg-info text-dark'; // สีฟ้า
 
-        grid.innerHTML += `
-        <div class="col-md-4 fade-in">
+        // สร้าง HTML การ์ด (เพิ่ม Animation fade-in)
+        // delay เล็กน้อยเพื่อให้การ์ดค่อยๆ โผล่มาทีละใบ (index * 50ms)
+        const cardHTML = `
+        <div class="col-md-4 fade-in" style="animation-delay: ${index * 0.05}s">
             <a href="article.html?id=${item.id}" class="text-decoration-none text-dark">
                 <div class="card card-hover h-100 shadow-sm border-0">
                     ${imgHTML}
                     <div class="card-body">
                         <span class="badge ${badgeColor} badge-custom mb-2">${item.category}</span>
-                        <h5 class="fw-bold text-truncate">${item.title}</h5>
-                        <p class="text-muted small text-truncate-2">${item.content}</p>
+                        <h5 class="fw-bold text-truncate mb-2">${item.title}</h5>
+                        <p class="text-muted small text-truncate-2 mb-0">${item.content}</p>
                     </div>
                 </div>
             </a>
         </div>`;
+
+        grid.innerHTML += cardHTML;
     });
 }
 
-// 3. [ระบบ Live Search] ค้นหาทันทีที่พิมพ์
-document.getElementById('searchInput')?.addEventListener('input', (e) => {
-    const searchText = e.target.value.toLowerCase().trim();
+// ==========================================
+// 3. ระบบค้นหา (Search Logic)
+// ==========================================
+// ฟังก์ชันค้นหาหลัก (ทำงานเมื่อพิมพ์ในช่องใหญ่ หรือถูกสั่งจากช่องเล็ก)
+const mainSearchInput = document.getElementById('searchInput');
 
-    // กรองข้อมูลจาก allData
-    const filtered = allData.filter(item => {
-        // ค้นหาคำใน Title, Content, Solution และ Category
-        return (item.title && item.title.toLowerCase().includes(searchText)) ||
-               (item.content && item.content.toLowerCase().includes(searchText)) ||
-               (item.solution && item.solution.toLowerCase().includes(searchText)) ||
-               (item.category && item.category.toLowerCase().includes(searchText));
+if (mainSearchInput) {
+    mainSearchInput.addEventListener('input', (e) => {
+        const txt = e.target.value.toLowerCase().trim();
+
+        // กรองข้อมูลจาก allData
+        const filtered = allData.filter(item => {
+            return (item.title && item.title.toLowerCase().includes(txt)) ||
+                   (item.content && item.content.toLowerCase().includes(txt)) ||
+                   (item.solution && item.solution.toLowerCase().includes(txt)) ||
+                   (item.category && item.category.toLowerCase().includes(txt));
+        });
+
+        render(filtered);
     });
+}
 
-    render(filtered);
+// ==========================================
+// 4. Navbar Search (ช่องค้นหาเล็กบนเมนู)
+// ==========================================
+// ปุ่มแว่นขยาย: กดแล้วช่องค้นหายืดออกมา
+window.toggleSearch = () => {
+    const box = document.getElementById('navSearchBox');
+    const input = document.getElementById('navSearchInput');
+    
+    if(box) {
+        box.classList.toggle('search-box-active'); // คลาสนี้อยู่ใน CSS ที่ให้ไป
+        if (box.classList.contains('search-box-active') && input) {
+            input.focus(); // ให้เคอร์เซอร์กระพริบพร้อมพิมพ์
+        }
+    }
+};
+
+// ซิงค์ข้อมูล: พิมพ์ข้างบน ให้ไปค้นหาข้างล่างด้วย
+const navInput = document.getElementById('navSearchInput');
+if (navInput) {
+    navInput.addEventListener('input', (e) => {
+        if(mainSearchInput) {
+            mainSearchInput.value = e.target.value; // ก๊อปข้อความไปใส่ช่องใหญ่
+            mainSearchInput.dispatchEvent(new Event('input')); // สั่งให้ช่องใหญ่ทำงาน
+        }
+        
+        // ถ้าพิมพ์แล้ว ให้เลื่อนหน้าจอลงมาดูผลลัพธ์นิดนึง
+        if(e.target.value.length > 0 && window.scrollY < 200) {
+            window.scrollTo({ top: 350, behavior: 'smooth' });
+        }
+    });
+}
+
+// ==========================================
+// 5. Navbar Scroll Effect (สไลด์ขึ้น-ลง)
+// ==========================================
+let lastScrollTop = 0;
+const navbar = document.getElementById('mainNav');
+
+window.addEventListener('scroll', () => {
+    if(!navbar) return;
+    
+    let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // ถ้าเลื่อนลงเยอะกว่า 100px ให้ซ่อน Navbar
+    if (scrollTop > lastScrollTop && scrollTop > 100) {
+        navbar.style.transform = 'translateY(-100%)'; // เลื่อนขึ้นไปซ่อน
+    } else {
+        navbar.style.transform = 'translateY(0)'; // เลื่อนลงมาโชว์
+    }
+    lastScrollTop = scrollTop;
 });
 
-// 4. ระบบ Filter หมวดหมู่ (ปุ่มกด)
+// ==========================================
+// 6. ระบบกรองหมวดหมู่ (Category Filter)
+// ==========================================
 window.filterCat = (cat) => {
-    // ปรับสีปุ่ม Active
+    // เปลี่ยนสีปุ่มให้รู้ว่ากดอันไหนอยู่
     document.querySelectorAll('.btn-outline-primary').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`btn${cat}`).classList.add('active');
+    const activeBtn = document.getElementById(`btn${cat}`);
+    if(activeBtn) activeBtn.classList.add('active');
 
+    // กรองข้อมูล
     if (cat === 'All') {
         render(allData);
     } else {
@@ -95,5 +171,5 @@ window.filterCat = (cat) => {
     }
 };
 
-// เริ่มทำงาน
+// เริ่มต้นทำงาน
 loadArticles();
