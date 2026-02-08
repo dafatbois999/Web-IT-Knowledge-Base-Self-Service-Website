@@ -2,29 +2,49 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>รายละเอียด</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายละเอียดบทความ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container py-5">
-        <a href="index.html" class="btn btn-light rounded-pill mb-4">&larr; กลับหน้าหลัก</a>
+        <a href="index.html" class="btn btn-light rounded-pill mb-4 shadow-sm">
+            <i class="bi bi-arrow-left"></i> กลับหน้าหลัก
+        </a>
+
+        <div id="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">กำลังโหลดข้อมูล...</p>
+        </div>
 
         <div id="content" class="bg-white p-4 p-md-5 rounded shadow-sm mx-auto" style="max-width: 800px; display:none;">
-            <span id="cat" class="badge bg-secondary mb-2 badge-custom">Category</span>
-            <h1 id="title" class="fw-bold mb-3">Title</h1>
             
-            <img id="img" src="" class="img-fluid rounded mb-4 w-100 d-none">
+            <span id="cat" class="badge bg-secondary mb-3 badge-custom" style="font-weight: normal; padding: 6px 12px;">Category</span>
+            <h1 id="title" class="fw-bold mb-4">...</h1>
             
-            <div id="vidBox" class="ratio ratio-16x9 d-none rounded mb-4">
-                <iframe id="vid" src="" allowfullscreen></iframe>
+            <img id="img" src="" class="img-fluid rounded mb-5 w-100 d-none shadow-sm" style="max-height: 450px; object-fit: cover;">
+            
+            <h5 class="text-danger fw-bold mb-3">
+                <i class="bi bi-exclamation-circle-fill"></i> ปัญหาที่พบ
+            </h5>
+            <div id="desc" class="text-secondary mb-5" style="font-size: 1.1rem; line-height: 1.6;"></div>
+            
+            <h5 class="text-success fw-bold mb-3">
+                <i class="bi bi-check-circle-fill"></i> วิธีแก้ไข
+            </h5>
+            <div id="sol" class="mb-5" style="white-space: pre-wrap; font-size: 1.1rem; line-height: 1.8;"></div>
+
+            <div id="vidBox" class="d-none mt-4 pt-4 border-top">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-youtube text-danger"></i> วิดีโอแนะนำ
+                </h5>
+                <div class="ratio ratio-16x9 rounded overflow-hidden shadow-sm">
+                    <iframe id="vid" src="" title="YouTube video" allowfullscreen></iframe>
+                </div>
             </div>
 
-            <h5 class="text-danger fw-bold">ปัญหาที่พบ</h5>
-            <p id="desc" class="text-muted mb-4"></p>
-            
-            <h5 class="text-success fw-bold">วิธีแก้ไข</h5>
-            <p id="sol" style="white-space: pre-line;"></p>
         </div>
     </div>
 
