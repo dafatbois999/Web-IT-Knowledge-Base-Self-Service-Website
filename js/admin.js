@@ -1,6 +1,6 @@
 import { supabase } from './supabase-config.js';
 
-// 1. เช็ค Login
+// 1. ตรวจสอบสถานะ Login
 if (!localStorage.getItem('admin_token')) {
     document.getElementById('loginModal').style.display = 'block';
 } else {
@@ -8,7 +8,7 @@ if (!localStorage.getItem('admin_token')) {
     loadTable();
 }
 
-// 2. ระบบ Login
+// 2. ระบบ Login (เข้าสู่ระบบ)
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('user').value;
@@ -24,70 +24,96 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 });
 
+// [ใหม่!] 3. ระบบ Register Admin (สร้างแอดมินใหม่)
+document.getElementById('regForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const newUser = document.getElementById('regUser').value;
+    const newPass = document.getElementById('regPass').value;
+
+    // เช็คก่อนว่าชื่อซ้ำไหม
+    const { data: existingUser } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('username', newUser)
+        .single();
+
+    if (existingUser) {
+        alert("ชื่อผู้ใช้นี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น");
+        return;
+    }
+
+    // บันทึกลง Supabase
+    const { error } = await supabase.from('admins').insert({
+        username: newUser,
+        password: newPass
+    });
+
+    if (error) {
+        alert("เกิดข้อผิดพลาด: " + error.message);
+    } else {
+        alert("สร้างบัญชีแอดมินใหม่สำเร็จ!");
+        document.getElementById('regModal').style.display = 'none'; // ปิด Modal
+        document.getElementById('regForm').reset(); // ล้างฟอร์ม
+    }
+});
+
+// 4. Logout
 document.getElementById('logoutBtn').addEventListener('click', () => {
     localStorage.removeItem('admin_token');
     location.reload();
 });
 
-// 3. ระบบบันทึก + อัปโหลดรูป (พระเอกของเรา)
+// 5. บันทึกบทความ + อัปรูป
 document.getElementById('addForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button');
-    btn.innerText = "กำลังอัปโหลด..."; 
+    btn.innerText = "กำลังบันทึก..."; 
     btn.disabled = true;
 
     try {
         let finalImageUrl = "";
         const file = document.getElementById('inpImg').files[0];
 
-        // --- ขั้นตอนอัปรูป ---
+        // อัปโหลดรูป (ถ้ามี)
         if (file) {
-            const fileName = Date.now() + '-' + file.name; // ตั้งชื่อไฟล์ไม่ให้ซ้ำ
-
-            // อัปขึ้นถัง images
-            const { error: uploadError } = await supabase.storage
-                .from('images')
-                .upload(fileName, file);
-            
+            const fileName = Date.now() + '-' + file.name;
+            const { error: uploadError } = await supabase.storage.from('images').upload(fileName, file);
             if (uploadError) throw uploadError;
 
-            // ขอลิงก์รูปมาใช้
-            const { data } = supabase.storage
-                .from('images')
-                .getPublicUrl(fileName);
-                
+            const { data } = supabase.storage.from('images').getPublicUrl(fileName);
             finalImageUrl = data.publicUrl;
         }
 
-        // --- ขั้นตอนบันทึกข้อมูล ---
+        // บันทึกลง Database
         const { error: dbError } = await supabase.from('articles').insert({
             title: document.getElementById('inpTitle').value,
             category: document.getElementById('inpCat').value,
             content: document.getElementById('inpDesc').value,
             solution: document.getElementById('inpSol').value,
             video_url: document.getElementById('inpVid').value,
-            image_url: finalImageUrl, // เก็บลิงก์รูปลง Database
+            image_url: finalImageUrl,
             status: 'Published'
         });
 
         if (dbError) throw dbError;
 
-        alert('บันทึกสำเร็จ!');
+        alert('บันทึกบทความเรียบร้อย!');
         e.target.reset();
         loadTable();
 
     } catch (err) {
         alert('เกิดข้อผิดพลาด: ' + err.message);
     } finally {
-        btn.innerText = "บันทึกข้อมูล";
+        btn.innerHTML = '<i class="bi bi-save"></i> บันทึกบทความ';
         btn.disabled = false;
     }
 });
 
-// 4. โหลดข้อมูลลงตาราง
+// 6. โหลดตารางบทความ
 async function loadTable() {
     const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = 'Loading...';
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
     
     const { data } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
     
@@ -95,13 +121,13 @@ async function loadTable() {
     data.forEach(item => {
         tbody.innerHTML += `
             <tr>
-                <td>${item.title}</td>
-                <td><button onclick="delItem(${item.id})" class="btn btn-sm btn-danger">ลบ</button></td>
+                <td class="ps-4">${item.title}</td>
+                <td class="text-end pe-4"><button onclick="delItem(${item.id})" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> ลบ</button></td>
             </tr>`;
     });
 }
 
-// ฟังก์ชันลบ (ต้องผูกกับ Window)
+// 7. ลบบทความ
 window.delItem = async (id) => {
     if(confirm('ยืนยันลบ?')) {
         await supabase.from('articles').delete().eq('id', id);
