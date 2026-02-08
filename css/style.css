@@ -189,3 +189,57 @@ body {
         font-size: 1rem;
     }
 }
+/* --- Navbar Styles --- */
+#mainNav {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px); /* พื้นหลังเบลอ */
+    padding: 15px 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease-in-out, padding 0.3s;
+}
+
+/* คลาสสำหรับซ่อน Navbar (เลื่อนขึ้นไปข้างบน) */
+.navbar-hidden {
+    transform: translateY(-100%);
+}
+
+/* ปุ่มแว่นขยายกลมๆ */
+.btn-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+.btn-circle:hover {
+    background-color: var(--primary-color);
+    color: white !important;
+    transform: rotate(90deg); /* หมุนเท่ๆ */
+}
+
+/* --- Search Box Pop-out Effect --- */
+.search-box-hidden {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* เด้งดึ๋ง */
+    margin-right: 5px;
+}
+
+/* คลาสที่จะใส่ด้วย JS เพื่อให้มันเด้งออกมา */
+.search-box-active {
+    width: 200px; /* ความกว้างตอนยืดออก */
+    opacity: 1;
+}
+
+/* Responsive: มือถือให้โชว์เต็ม */
+@media (max-width: 991px) {
+    .search-box-hidden {
+        width: 100%;
+        opacity: 1;
+        margin-bottom: 10px;
+    }
+    .btn-circle { display: none; } /* ซ่อนปุ่มแว่นในมือถือเพราะโชว์ช่องเลย */
+}
