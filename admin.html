@@ -25,20 +25,14 @@
     <div id="regModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1050;">
         <div class="card shadow" style="width:350px; margin:100px auto; border:none;">
             <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-person-plus-fill"></i> เพิ่มผู้ดูแลใหม่</span>
-                <button type="button" class="btn-close btn-close-white" onclick="closeRegModal()"></button>
+                <span>เพิ่มผู้ดูแลใหม่</span>
+                <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('regModal').style.display='none'"></button>
             </div>
             <div class="card-body p-4">
                 <form id="regForm">
-                    <div class="mb-3">
-                        <label class="small text-muted">ตั้งชื่อผู้ใช้ (Username)</label>
-                        <input id="regUser" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="small text-muted">ตั้งรหัสผ่าน (Password)</label>
-                        <input type="password" id="regPass" class="form-control" required>
-                    </div>
-                    <button class="btn btn-success w-100">ยืนยันสร้างบัญชี</button>
+                    <div class="mb-3"><input id="regUser" class="form-control" placeholder="Username" required></div>
+                    <div class="mb-3"><input type="password" id="regPass" class="form-control" placeholder="Password" required></div>
+                    <button class="btn btn-success w-100">ยืนยัน</button>
                 </form>
             </div>
         </div>
@@ -47,19 +41,10 @@
     <nav class="navbar navbar-dark bg-dark mb-4 shadow-sm">
         <div class="container">
             <span class="navbar-brand fw-bold"><i class="bi bi-shield-lock"></i> Admin Panel</span>
-            
             <div class="d-flex gap-2">
-                <button onclick="openRegModal()" class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-person-plus"></i> เพิ่มแอดมิน
-                </button>
-
-                <a href="index.html" class="btn btn-outline-info btn-sm" target="_blank">
-                    <i class="bi bi-globe"></i> ไปหน้าบ้าน
-                </a>
-                
-                <button id="logoutBtn" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Logout
-                </button>
+                <button onclick="document.getElementById('regModal').style.display='block'" class="btn btn-outline-success btn-sm"><i class="bi bi-person-plus"></i> เพิ่มแอดมิน</button>
+                <a href="index.html" class="btn btn-outline-info btn-sm" target="_blank"><i class="bi bi-globe"></i> ไปหน้าบ้าน</a>
+                <button id="logoutBtn" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</button>
             </div>
         </div>
     </nav>
@@ -67,24 +52,21 @@
     <div class="container">
         <div class="row g-4">
             <div class="col-md-5">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white fw-bold py-3">
+                <div class="card border-0 shadow-sm sticky-top" style="top: 20px; z-index: 1;">
+                    <div class="card-header bg-white fw-bold py-3" id="formHeader">
                         <i class="bi bi-plus-circle"></i> เพิ่มบทความใหม่
                     </div>
                     <div class="card-body p-4">
                         <form id="addForm">
-                            <label class="small text-muted mb-1">หัวข้อปัญหา</label>
-                            <input id="inpTitle" class="form-control mb-3" placeholder="เช่น เน็ตหลุดบ่อย..." required>
+                            <input type="hidden" id="editId"> <label class="small text-muted mb-1">หัวข้อปัญหา</label>
+                            <input id="inpTitle" class="form-control mb-3" required>
                             
                             <label class="small text-muted mb-1">หมวดหมู่</label>
                             <select id="inpCat" class="form-select mb-3">
-                                <option>Hardware</option>
-                                <option>Software</option>
-                                <option>Network</option>
-                                <option>Other</option>
+                                <option>Hardware</option><option>Software</option><option>Network</option><option>Other</option>
                             </select>
                             
-                            <label class="small text-muted mb-1">รายละเอียดปัญหา</label>
+                            <label class="small text-muted mb-1">รายละเอียด</label>
                             <textarea id="inpDesc" class="form-control mb-3" rows="3" required></textarea>
                             
                             <label class="small text-muted mb-1">วิธีแก้ไข</label>
@@ -93,12 +75,13 @@
                             <label class="small text-muted mb-1">YouTube Link</label>
                             <input id="inpVid" class="form-control mb-3">
                             
-                            <label class="small text-muted mb-1">รูปภาพประกอบ</label>
+                            <label class="small text-muted mb-1">รูปภาพ</label>
                             <input type="file" id="inpImg" class="form-control mb-4" accept="image/*">
                             
-                            <button class="btn btn-primary w-100 py-2 fw-bold">
-                                <i class="bi bi-save"></i> บันทึกบทความ
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button type="submit" id="submitBtn" class="btn btn-primary w-100 py-2 fw-bold"><i class="bi bi-save"></i> บันทึก</button>
+                                <button type="button" id="cancelBtn" class="btn btn-secondary w-100 py-2 fw-bold d-none" onclick="cancelEdit()">ยกเลิก</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -107,7 +90,7 @@
             <div class="col-md-7">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-list-ul"></i> รายการทั้งหมด</span>
+                        <span>รายการทั้งหมด</span>
                         <button onclick="loadTable()" class="btn btn-sm btn-light border"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
                     </div>
                     <div class="card-body p-0">
@@ -116,7 +99,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th class="ps-4">หัวข้อ</th>
-                                        <th class="text-end pe-4" style="width: 100px;">จัดการ</th>
+                                        <th class="text-end pe-4" style="width: 140px;">จัดการ</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody"></tbody>
@@ -130,10 +113,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="js/admin.js"></script>
-
-    <script>
-        function openRegModal() { document.getElementById('regModal').style.display = 'block'; }
-        function closeRegModal() { document.getElementById('regModal').style.display = 'none'; }
-    </script>
 </body>
 </html>
