@@ -11,15 +11,17 @@ body {
     background-color: #f8f9fa;
     color: #333;
     -webkit-font-smoothing: antialiased;
+    /* [สำคัญ] ดันเนื้อหาลงมาเพราะ Navbar เป็น Fixed */
+    padding-top: 80px; 
 }
 
-/* --- 1. Navbar Styles (ใหม่) --- */
+/* --- Navbar Styles --- */
 #mainNav {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     padding: 12px 0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease-in-out; /* สำหรับ Slide */
+    /* ไม่ต้องมี transition transform แล้ว เพราะเราจะตรึงไว้ */
 }
 
 /* ปุ่มแว่นขยายกลมๆ */
@@ -50,11 +52,11 @@ body {
     opacity: 1;
 }
 
-/* --- 2. Hero Header --- */
+/* --- Hero Header --- */
 .hero-header {
     background: linear-gradient(135deg, #0052cc 0%, #007bff 100%);
     color: white;
-    padding: 6rem 0 5rem 0; /* เพิ่ม Padding บนหลบ Navbar */
+    padding: 4rem 0 5rem 0;
     margin-bottom: 2rem;
     border-radius: 0 0 50px 50px;
     box-shadow: 0 10px 30px rgba(0, 82, 204, 0.2);
@@ -72,7 +74,7 @@ body {
     transition: all 0.3s;
 }
 
-/* --- 3. Card Design --- */
+/* --- Card Design --- */
 .card-hover {
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     border-radius: var(--card-radius);
@@ -98,17 +100,16 @@ body {
     font-size: 0.8rem;
 }
 
-/* --- 4. Animation --- */
+/* --- Animation & Utils --- */
 .fade-in {
     animation: fadeIn 0.5s ease-out forwards;
-    opacity: 0; /* เริ่มต้นซ่อนไว้ก่อน */
+    opacity: 0;
 }
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ปุ่ม Keyword */
 .pointer {
     cursor: pointer;
     transition: 0.2s;
@@ -119,17 +120,15 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-/* Loading Overlay */
 .loading-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: white; z-index: 9999;
     display: flex; justify-content: center; align-items: center;
 }
 
-/* Responsive */
 @media (max-width: 991px) {
     .search-box-hidden {
-        width: 100%; opacity: 1; margin-bottom: 10px; /* มือถือโชว์เต็ม */
+        width: 100%; opacity: 1; margin-bottom: 10px;
     }
     .btn-circle { display: none; }
 }
