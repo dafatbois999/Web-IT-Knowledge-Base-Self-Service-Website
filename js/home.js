@@ -5,7 +5,7 @@ const noResult = document.getElementById('noResult');
 const loader = document.getElementById('loader');
 let allData = []; 
 
-// 1. โหลดข้อมูล
+// 1. Load Data
 async function loadArticles() {
     try {
         const { data, error } = await supabase
@@ -26,7 +26,7 @@ async function loadArticles() {
     }
 }
 
-// 2. แสดงผล (Render)
+// 2. Render Cards
 function render(list) {
     grid.innerHTML = '';
     
@@ -53,7 +53,13 @@ function render(list) {
                 <div class="card card-hover h-100 shadow-sm border-0">
                     ${imgHTML}
                     <div class="card-body">
-                        <span class="badge ${badgeColor} badge-custom mb-2">${item.category}</span>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge ${badgeColor} badge-custom">${item.category}</span>
+                            <small class="text-muted" style="font-size: 0.8rem;">
+                                <i class="bi bi-eye-fill"></i> ${item.views || 0}
+                            </small>
+                        </div>
+                        
                         <h5 class="fw-bold text-truncate mb-2">${item.title}</h5>
                         <p class="text-muted small text-truncate-2 mb-0">${item.content}</p>
                     </div>
@@ -64,7 +70,7 @@ function render(list) {
     });
 }
 
-// 3. ระบบค้นหา (Live Search)
+// 3. Main Search
 const mainSearchInput = document.getElementById('searchInput');
 if (mainSearchInput) {
     mainSearchInput.addEventListener('input', (e) => {
@@ -79,7 +85,7 @@ if (mainSearchInput) {
     });
 }
 
-// 4. Navbar Search Toggle (กดแว่นขยายแล้วเด้ง)
+// 4. Navbar Search Toggle
 window.toggleSearch = () => {
     const box = document.getElementById('navSearchBox');
     const input = document.getElementById('navSearchInput');
@@ -89,7 +95,6 @@ window.toggleSearch = () => {
     }
 };
 
-// ซิงค์ช่องค้นหาเล็กกับใหญ่
 const navInput = document.getElementById('navSearchInput');
 if (navInput) {
     navInput.addEventListener('input', (e) => {
@@ -103,7 +108,7 @@ if (navInput) {
     });
 }
 
-// 5. กรองหมวดหมู่
+// 5. Filter Category
 window.filterCat = (cat) => {
     document.querySelectorAll('.btn-light').forEach(btn => btn.classList.remove('active', 'fw-bold'));
     const activeBtn = document.getElementById(`btn${cat}`);
