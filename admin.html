@@ -12,7 +12,8 @@
         body { font-family: 'Sarabun', sans-serif; background-color: #e9ecef; }
         .navbar-custom { background-color: #343a40; }
         .card { border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .btn-insert-img { font-size: 0.8rem; padding: 2px 8px; }
+        .nav-tabs .nav-link { color: #495057; cursor: pointer; }
+        .nav-tabs .nav-link.active { font-weight: bold; color: #0d6efd; }
     </style>
 </head>
 <body>
@@ -31,13 +32,18 @@
     <div id="regModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2050;">
         <div class="card p-4 mx-auto mt-5 border-0 shadow" style="width:350px;">
             <div class="d-flex justify-content-between mb-3">
-                <h5 class="text-secondary fw-bold">เพิ่มผู้ดูแลใหม่</h5>
+                <h5 class="text-secondary fw-bold">สร้างบัญชีใหม่</h5>
                 <button type="button" class="btn-close" onclick="document.getElementById('regModal').style.display='none'"></button>
             </div>
             <form id="regForm">
-                <input id="regUser" class="form-control mb-2 bg-light border-0" placeholder="Username" required>
-                <input type="password" id="regPass" class="form-control mb-3 bg-light border-0" placeholder="Password" required>
-                <button class="btn btn-success w-100 fw-bold">ยืนยันสร้างบัญชี</button>
+                <input id="regEmail" type="email" class="form-control mb-2 bg-light border-0" placeholder="Email" required>
+                <input id="regPass" type="password" class="form-control mb-3 bg-light border-0" placeholder="Password (ขั้นต่ำ 6 ตัว)" required>
+                <select id="regRole" class="form-select mb-3 bg-light border-0 fw-bold text-primary">
+                    <option value="student">🎓 Student (นักเรียน)</option>
+                    <option value="teacher">👨‍🏫 Teacher (ครู)</option>
+                    <option value="admin">🛠 Admin</option>
+                </select>
+                <button class="btn btn-success w-100 fw-bold">สร้างบัญชี</button>
             </form>
         </div>
     </div>
@@ -46,10 +52,6 @@
         <div class="container">
             <span class="navbar-brand fw-bold"><i class="bi bi-gear-fill"></i> Admin Panel</span>
             <div>
-                <button onclick="document.getElementById('regModal').style.display='block'" class="btn btn-sm btn-outline-light me-1 opacity-75">
-                    <i class="bi bi-person-plus-fill"></i> เพิ่มแอดมิน
-                </button>
-                
                 <a href="index.html" class="btn btn-sm btn-outline-light me-1 opacity-75" target="_blank">หน้าบ้าน</a>
                 <button id="logoutBtn" class="btn btn-sm btn-light text-dark fw-bold">Logout</button>
             </div>
@@ -58,110 +60,134 @@
 
     <div class="container pb-5">
         
-        <div class="row g-3 mb-4 text-center">
-            <div class="col-6 col-md-3">
-                <div class="card p-3">
-                    <h3 class="text-dark"><span id="statTotal">0</span></h3>
-                    <small class="text-muted">ทั้งหมด</small>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card p-3">
-                    <h3 class="text-dark"><span id="statHardware">0</span></h3>
-                    <small class="text-muted">Hardware</small>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card p-3">
-                    <h3 class="text-dark"><span id="statSoftware">0</span></h3>
-                    <small class="text-muted">Software</small>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card p-3">
-                    <h3 class="text-dark"><span id="statNetwork">0</span></h3>
-                    <small class="text-muted">Network</small>
-                </div>
-            </div>
-        </div>
+        <ul class="nav nav-tabs mb-4 border-bottom-0">
+            <li class="nav-item">
+                <a class="nav-link active" id="tabArticles" onclick="switchTab('articles')">
+                    <i class="bi bi-journal-text"></i> จัดการบทความ
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabUsers" onclick="switchTab('users')">
+                    <i class="bi bi-people-fill"></i> จัดการผู้ใช้งาน
+                </a>
+            </li>
+        </ul>
 
-        <div class="row">
-            <div class="col-md-5 mb-4">
-                <div class="card border-0 sticky-top" style="top: 20px; z-index: 100;">
-                    <div class="card-header bg-white fw-bold text-secondary border-bottom py-3" id="formHeader">
-                        <i class="bi bi-plus-lg"></i> เพิ่มบทความใหม่
-                    </div>
-                    <div class="card-body">
-                        <form id="addForm">
-                            <input type="hidden" id="editId">
-                            
-                            <label class="form-label small text-muted">หัวข้อ</label>
-                            <input id="inpTitle" class="form-control mb-2 bg-light border-0" required>
-                            
-                            <label class="form-label small text-muted">หมวดหมู่</label>
-                            <select id="inpCat" class="form-select mb-2 bg-light border-0">
-                                <option>Hardware</option><option>Software</option><option>Network</option>
-                            </select>
-                            
-                            <label class="form-label small text-muted">รายละเอียดปัญหา</label>
-                            <textarea id="inpDesc" class="form-control mb-2 bg-light border-0" rows="3" required></textarea>
-                            
-                            <hr class="text-muted opacity-25 my-3">
+        <div id="sectionArticles">
+            <div class="row g-3 mb-4 text-center">
+                <div class="col-6 col-md-3"><div class="card p-3"><h3><span id="statTotal">0</span></h3><small>ทั้งหมด</small></div></div>
+                <div class="col-6 col-md-3"><div class="card p-3"><h3><span id="statHardware">0</span></h3><small>Hardware</small></div></div>
+                <div class="col-6 col-md-3"><div class="card p-3"><h3><span id="statSoftware">0</span></h3><small>Software</small></div></div>
+                <div class="col-6 col-md-3"><div class="card p-3"><h3><span id="statNetwork">0</span></h3><small>Network</small></div></div>
+            </div>
 
-                            <div class="d-flex justify-content-between align-items-end mb-1">
-                                <label class="form-label small text-muted mb-0">วิธีแก้ไข</label>
-                                
-                                <div>
-                                    <input type="file" id="insertImgFile" accept="image/*" style="display: none;">
-                                    <button type="button" onclick="document.getElementById('insertImgFile').click()" class="btn btn-outline-secondary btn-insert-img">
-                                        <i class="bi bi-image"></i> แทรกรูป
-                                    </button>
+            <div class="row">
+                <div class="col-md-5 mb-4">
+                    <div class="card border-0 sticky-top" style="top: 20px; z-index: 100;">
+                        <div class="card-header bg-white fw-bold text-secondary border-bottom py-3" id="formHeader">
+                            <i class="bi bi-plus-lg"></i> เพิ่มบทความใหม่
+                        </div>
+                        <div class="card-body">
+                            <form id="addForm">
+                                <input type="hidden" id="editId">
+                                <label class="form-label small text-muted">หัวข้อ</label>
+                                <input id="inpTitle" class="form-control mb-2 bg-light border-0" required>
+                                <label class="form-label small text-muted">หมวดหมู่</label>
+                                <select id="inpCat" class="form-select mb-2 bg-light border-0">
+                                    <option>Hardware</option><option>Software</option><option>Network</option>
+                                </select>
+                                <label class="form-label small text-muted">รายละเอียดปัญหา</label>
+                                <textarea id="inpDesc" class="form-control mb-2 bg-light border-0" rows="3" required></textarea>
+                                <hr class="text-muted opacity-25 my-3">
+                                <div class="d-flex justify-content-between align-items-end mb-1">
+                                    <label class="form-label small text-muted mb-0">วิธีแก้ไข</label>
+                                    <div>
+                                        <input type="file" id="insertImgFile" accept="image/*" style="display: none;">
+                                        <button type="button" onclick="document.getElementById('insertImgFile').click()" class="btn btn-sm btn-outline-secondary">แทรกรูป</button>
+                                    </div>
                                 </div>
-                            </div>
-                            <textarea id="inpSol" class="form-control mb-3 bg-light border-0" rows="8" placeholder="เขียนวิธีแก้... กดปุ่มแทรกรูปเพื่อใส่ภาพประกอบตรงนี้" required></textarea>
-                            
-                            <hr class="text-muted opacity-25 my-3">
-                            
-                            <label class="form-label small text-muted">ลิงก์ YouTube (ถ้ามี)</label>
-                            <input id="inpVid" class="form-control mb-2 bg-light border-0" placeholder="https://youtu.be/...">
-                            
-                            <label class="form-label small text-muted">รูปภาพหน้าปก</label>
-                            <input type="file" id="inpImg" class="form-control mb-4 bg-light border-0">
-                            
-                            <div class="d-flex gap-2">
-                                <button type="submit" id="submitBtn" class="btn btn-dark w-100 py-2">บันทึกข้อมูล</button>
-                                <button type="button" id="cancelBtn" class="btn btn-outline-secondary w-100 py-2 d-none" onclick="cancelEdit()">ยกเลิก</button>
-                            </div>
-                        </form>
+                                <textarea id="inpSol" class="form-control mb-3 bg-light border-0" rows="8" placeholder="เขียนวิธีแก้..." required></textarea>
+                                <hr class="text-muted opacity-25 my-3">
+                                <label class="form-label small text-muted">ลิงก์ YouTube</label>
+                                <input id="inpVid" class="form-control mb-2 bg-light border-0">
+                                <label class="form-label small text-muted">รูปภาพหน้าปก</label>
+                                <input type="file" id="inpImg" class="form-control mb-4 bg-light border-0">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" id="submitBtn" class="btn btn-dark w-100 py-2">บันทึกข้อมูล</button>
+                                    <button type="button" id="cancelBtn" class="btn btn-outline-secondary w-100 py-2 d-none" onclick="cancelEdit()">ยกเลิก</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-md-7">
-                <div class="card border-0">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom py-3">
-                        <span class="fw-bold text-secondary">รายการบทความ</span>
-                        <button onclick="loadTable()" class="btn btn-sm btn-light border text-secondary"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 align-middle">
-                                <thead class="bg-light text-secondary">
-                                    <tr>
-                                        <th class="ps-3 border-0">ชื่อบทความ</th>
-                                        <th style="width: 130px;" class="text-center border-0">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableBody"></tbody>
-                            </table>
+                <div class="col-md-7">
+                    <div class="card border-0">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom py-3">
+                            <span class="fw-bold text-secondary">รายการบทความ</span>
+                            <button onclick="loadTable()" class="btn btn-sm btn-light border text-secondary"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <tbody id="tableBody"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div id="sectionUsers" class="d-none">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <span class="fw-bold text-secondary">รายชื่อผู้ใช้งานในระบบ</span>
+                    <button onclick="document.getElementById('regModal').style.display='block'" class="btn btn-sm btn-primary">
+                        <i class="bi bi-person-plus-fill"></i> สร้างบัญชีใหม่
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-secondary">
+                                <tr>
+                                    <th class="ps-4">Email</th>
+                                    <th>ชื่อ-สกุล</th>
+                                    <th>สถานะ (Role)</th>
+                                    <th class="text-end pe-4">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="js/admin.js"></script>
+
+    <script>
+        function switchTab(tab) {
+            // ปรับสีปุ่ม Tab
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(tab === 'articles' ? 'tabArticles' : 'tabUsers').classList.add('active');
+
+            // ซ่อน/แสดง Section
+            if (tab === 'articles') {
+                document.getElementById('sectionArticles').classList.remove('d-none');
+                document.getElementById('sectionUsers').classList.add('d-none');
+            } else {
+                document.getElementById('sectionArticles').classList.add('d-none');
+                document.getElementById('sectionUsers').classList.remove('d-none');
+                // เรียกฟังก์ชันโหลด User จาก js/admin.js (ผ่าน window event หรือรอโหลด)
+                if(window.loadUsers) window.loadUsers();
+            }
+        }
+    </script>
 </body>
 </html>
