@@ -1,44 +1,67 @@
 import { supabase } from './supabase-config.js';
 
+// Init Modals
+const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+const regModal = new bootstrap.Modal(document.getElementById('regModal'));
+
 // ==========================================
-// 1. Authentication & Init
+// 1. SYSTEM INIT & AUTH
 // ==========================================
-// เช็คว่าเคย Login หรือยัง (ใช้ token ง่ายๆ แบบเดิม)
-// หมายเหตุ: ในระบบจริงควรใช้ supabase.auth.getSession() แต่เพื่อไม่ให้กระทบของเดิมมาก เราจะคง logic นี้ไว้
-// แต่เพิ่มการเช็ค Role จริงๆ จาก Supabase ตอนโหลดหน้า User
-if (!localStorage.getItem('admin_token')) {
-    document.getElementById('loginModal').style.display = 'block';
-} else {
-    document.getElementById('loginModal').style.display = 'none';
-    loadTable(); // โหลดบทความก่อน
+checkAuth();
+
+async function checkAuth() {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        // ยังไม่ล็อกอิน -> โชว์ Modal
+        loginModal.show();
+    } else {
+        // ล็อกอินแล้ว -> เช็คสิทธิ์ Admin
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        
+        if (profile?.role !== 'admin') {
+            alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (Role: ' + (profile?.role || 'unknown') + ')');
+            await supabase.auth.signOut();
+            loginModal.show();
+        } else {
+            // สิทธิ์ผ่าน -> เริ่มโหลดข้อมูลบทความ
+            loginModal.hide();
+            document.getElementById('adminEmail').innerText = user.email;
+            loadTable(); 
+        }
+    }
 }
 
-// Login Handler (ของเดิม - แต่ปรับให้เช็ค profiles ด้วย)
+// Login Handler
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const u = document.getElementById('user').value; // ในที่นี้ admin เดิมใช้ username เราจะอนุโลมให้ผ่านไปก่อน
-    const p = document.getElementById('pass').value;
-    
-    // *หมายเหตุ* ระบบใหม่ใช้ Email Login แต่ระบบเก่าใช้ username/password ในตาราง admins
-    // เพื่อให้ทำงานร่วมกันได้: ถ้า Login ผ่านตาราง admins (แบบเก่า) ให้ถือว่าเป็น Super Admin
-    
-    const { data } = await supabase.from('admins').select('*').eq('username', u).eq('password', p).single();
-    if (data) { 
-        localStorage.setItem('admin_token', 'true'); 
+    const email = document.getElementById('loginEmail').value;
+    const pass = document.getElementById('loginPass').value;
+    const btn = document.getElementById('btnLogin');
+
+    btn.disabled = true; btn.innerText = "กำลังตรวจสอบ...";
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+
+    if (error) {
+        alert('ล็อกอินไม่สำเร็จ: ' + error.message);
+        btn.disabled = false; btn.innerText = "เข้าสู่ระบบ";
+    } else {
         location.reload(); 
-    } else { 
-        alert('รหัสผิด!'); 
     }
 });
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('admin_token');
-    location.reload();
+// Logout Handler
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    if(confirm('ยืนยันออกจากระบบ?')) {
+        await supabase.auth.signOut();
+        location.reload();
+    }
 });
 
 
 // ==========================================
-// 2. ARTICLE MANAGEMENT (ระบบบทความเดิม)
+// 2. ARTICLE MANAGEMENT (ระบบบทความ)
 // ==========================================
 function updateStats(data) {
     document.getElementById('statTotal').innerText = data.length;
@@ -82,7 +105,6 @@ window.loadTable = async function() {
     });
 }
 
-// Add/Edit Article Logic
 document.getElementById('addForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
@@ -130,7 +152,6 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Helper Functions for Articles
 window.editItem = async (id) => {
     const { data } = await supabase.from('articles').select('*').eq('id', id).single();
     if (data) {
@@ -154,6 +175,7 @@ window.cancelEdit = () => {
     document.getElementById('formHeader').innerHTML = `<i class="bi bi-plus-lg"></i> เพิ่มบทความใหม่`;
     document.getElementById('submitBtn').innerText = "บันทึกข้อมูล";
     document.getElementById('submitBtn').classList.replace('btn-warning', 'btn-dark');
+    document.getElementById('submitBtn').classList.add('btn-dark');
     document.getElementById('cancelBtn').classList.add('d-none');
 }
 
@@ -164,7 +186,6 @@ window.delItem = async (id) => {
     }
 }
 
-// Inline Image Logic
 document.getElementById('insertImgFile')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -178,35 +199,70 @@ document.getElementById('insertImgFile')?.addEventListener('change', async (e) =
         const imgTag = `\n<img src="${data.publicUrl}" class="img-fluid rounded shadow-sm my-3 d-block mx-auto" style="max-width:100%; max-height:400px;">\n`;
         const ta = document.getElementById('inpSol');
         ta.value += imgTag;
-    } catch (err) { alert(err.message); } 
-    finally { btn.innerHTML = originalText; btn.disabled = false; }
+    } catch (err) { alert(err.message); } finally { btn.innerHTML = originalText; btn.disabled = false; }
 });
 
 
 // ==========================================
-// 3. USER MANAGEMENT (ระบบใหม่)
+// 3. USER MANAGEMENT (จัดการผู้ใช้ + สร้าง Teacher)
 // ==========================================
 
-// ฟังก์ชันโหลดรายชื่อ User
+window.openRegModal = () => {
+    document.getElementById('regForm').reset();
+    regModal.show();
+}
+
+document.getElementById('regForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('regEmail').value;
+    const pass = document.getElementById('regPass').value;
+    const name = document.getElementById('regName').value;
+    const role = document.getElementById('regRole').value;
+
+    if(confirm(`ยืนยันสร้างบัญชี ${email} เป็น ${role} ?`)) {
+        // 1. สร้าง Auth User
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: pass,
+            options: { data: { full_name: name } }
+        });
+
+        if(error) return alert('Error: ' + error.message);
+
+        // 2. อัปเดต Role
+        if(data.user) {
+            setTimeout(async () => {
+                await supabase.from('profiles').update({ 
+                    full_name: name, 
+                    role: role 
+                }).eq('id', data.user.id);
+                
+                alert('สร้างบัญชีสำเร็จ!');
+                regModal.hide();
+                if(window.loadUsers) loadUsers();
+            }, 1000);
+        }
+    }
+});
+
 window.loadUsers = async function() {
     const tbody = document.getElementById('userTableBody');
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4">กำลังโหลดรายชื่อ...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4">กำลังโหลด...</td></tr>';
 
-    const { data: users, error } = await supabase.from('profiles').select('*').order('role');
+    const { data: users, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
     
     if (error) {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error: ${error.message}</td></tr>`;
         return;
     }
 
+    tbody.innerHTML = '';
     if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีผู้ใช้งาน</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ไม่พบข้อมูล</td></tr>';
         return;
     }
 
-    tbody.innerHTML = '';
     users.forEach(u => {
-        // กำหนดสี Badge
         let badge = 'bg-secondary';
         if (u.role === 'admin') badge = 'bg-dark';
         else if (u.role === 'teacher') badge = 'bg-primary';
@@ -225,52 +281,16 @@ window.loadUsers = async function() {
                             <li><a class="dropdown-item" href="#" onclick="updateRole('${u.id}', 'student')">🎓 Student</a></li>
                             <li><a class="dropdown-item" href="#" onclick="updateRole('${u.id}', 'teacher')">👨‍🏫 Teacher</a></li>
                         </ul>
-                    </div>
-                    ` : '<span class="text-muted small">แก้ไขไม่ได้</span>'}
+                    </div>` : '<span class="text-muted small">Super Admin</span>'}
                 </td>
             </tr>
         `;
     });
 }
 
-// ฟังก์ชันเปลี่ยน Role
-window.updateRole = async (userId, newRole) => {
-    if(confirm(`ยืนยันการเปลี่ยนสิทธิ์เป็น ${newRole}?`)) {
-        const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
-        if(error) alert('Error: ' + error.message);
-        else loadUsers(); // โหลดตารางใหม่
+window.updateRole = async (uid, newRole) => {
+    if(confirm(`เปลี่ยนสิทธิ์ผู้ใช้นี้เป็น ${newRole} ?`)) {
+        await supabase.from('profiles').update({ role: newRole }).eq('id', uid);
+        loadUsers();
     }
 }
-
-// ฟังก์ชันสร้าง User ใหม่ (Admin Create)
-document.getElementById('regForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('regEmail').value;
-    const pass = document.getElementById('regPass').value;
-    const role = document.getElementById('regRole').value;
-
-    if(confirm(`ยืนยันสร้างบัญชี ${email} เป็น ${role} ?`)) {
-        // 1. สร้างใน Supabase Auth
-        const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: pass
-        });
-
-        if(error) return alert('Error: ' + error.message);
-
-        // 2. อัปเดต Role ในตาราง Profiles (เพราะ Trigger จะสร้างเป็น student เสมอ เราต้องแก้ให้ตรงกับที่ Admin เลือก)
-        if(data.user) {
-            // รอแป๊บนึงเผื่อ Trigger ทำงานช้า
-            setTimeout(async () => {
-                await supabase.from('profiles').update({ role: role }).eq('id', data.user.id);
-                alert('สร้างบัญชีสำเร็จ!');
-                document.getElementById('regModal').style.display='none';
-                document.getElementById('regForm').reset();
-                // ถ้าอยู่ในแท็บ Users ให้รีเฟรชตาราง
-                if(!document.getElementById('sectionUsers').classList.contains('d-none')) {
-                    loadUsers();
-                }
-            }, 1000);
-        }
-    }
-});
