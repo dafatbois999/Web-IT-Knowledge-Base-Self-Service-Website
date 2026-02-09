@@ -1,4 +1,4 @@
-# IT Knowledge Base (ระบบคลังความรู้ไอที)
+# IT Knowledge Base (ระบบคลังความรู้ไอที)   URL- https://web-it-knowledge-base-self-service.vercel.app/
 
 เว็บแอปพลิเคชันสำหรับรวบรวมและเผยแพร่วิธีแก้ไขปัญหาคอมพิวเตอร์เบื้องต้น (Knowledge Base) ช่วยให้ผู้ใช้งานสามารถค้นหาวิธีแก้ปัญหา Hardware, Software และ Network ได้ด้วยตนเอง พร้อมระบบหลังบ้าน (Admin Panel) สำหรับจัดการเนื้อหาครบวงจร
 
