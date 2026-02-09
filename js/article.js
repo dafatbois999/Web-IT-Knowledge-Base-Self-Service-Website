@@ -2,7 +2,7 @@ import { supabase } from './supabase-config.js';
 
 const id = new URLSearchParams(window.location.search).get('id');
 
-// --- 1. Navbar Search Toggle ---
+// --- Navbar Search Logic ---
 window.toggleSearch = () => {
     const box = document.getElementById('navSearchBox');
     const input = document.getElementById('navSearchInput');
@@ -20,7 +20,7 @@ document.getElementById('navSearchInput')?.addEventListener('keypress', (e) => {
     }
 });
 
-// --- 2. Load Content ---
+// --- Main Logic ---
 async function loadDetail() {
     if (!id) {
         window.location.href = 'index.html';
@@ -37,17 +37,26 @@ async function loadDetail() {
         if (error) throw error;
 
         if (data) {
-            document.getElementById('cat').innerText = data.category;
-            
+            // [ส่วนสำคัญ] สั่งบวกยอดวิวเพิ่ม 1
+            incrementView(data.id, data.views);
+
+            // แสดงหมวดหมู่และสี
             let badgeClass = 'bg-primary';
             if (data.category === 'Hardware') badgeClass = 'bg-danger';
             if (data.category === 'Network') badgeClass = 'bg-success';
             if (data.category === 'Software') badgeClass = 'bg-info text-dark';
             
-            document.getElementById('cat').className = `badge badge-custom mb-3 ${badgeClass}`;
-            document.getElementById('title').innerText = data.title;
+            document.getElementById('cat').innerText = data.category;
+            document.getElementById('cat').className = `badge badge-custom ${badgeClass}`;
+            
+            // แสดงยอดวิวบนหน้าเว็บ (+1 ให้เห็นเลย)
+            const currentViews = data.views || 0;
+            document.getElementById('viewCountDisplay').innerHTML = 
+                `<i class="bi bi-eye-fill"></i> ${currentViews + 1}`;
 
-            // [จุดที่แก้ไข] เปลี่ยน innerText -> innerHTML เพื่อให้แสดงรูปภาพได้
+            document.getElementById('title').innerText = data.title;
+            
+            // ใช้ innerHTML เพื่อให้แสดงรูปภาพที่แทรกมาได้
             document.getElementById('desc').innerHTML = data.content; 
             document.getElementById('sol').innerHTML = data.solution; 
 
@@ -60,7 +69,6 @@ async function loadDetail() {
             if (data.video_url) {
                 const url = data.video_url;
                 let videoId = "";
-                // รองรับลิงก์ YouTube หลายแบบ
                 if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
                 else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
 
@@ -77,6 +85,12 @@ async function loadDetail() {
         console.error("Error:", err);
         document.getElementById('loading').innerHTML = `<p class="text-danger">ไม่พบข้อมูล</p>`;
     }
+}
+
+// ฟังก์ชันอัปเดตตัวเลขลง Database
+async function incrementView(articleId, currentViews) {
+    const newViews = (currentViews || 0) + 1;
+    await supabase.from('articles').update({ views: newViews }).eq('id', articleId);
 }
 
 loadDetail();
