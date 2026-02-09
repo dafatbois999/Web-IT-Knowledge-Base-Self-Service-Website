@@ -1,4 +1,3 @@
-/* Import Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
 
 :root {
@@ -10,125 +9,82 @@ body {
     font-family: 'Sarabun', sans-serif;
     background-color: #f8f9fa;
     color: #333;
-    -webkit-font-smoothing: antialiased;
-    /* [สำคัญ] ดันเนื้อหาลงมาเพราะ Navbar เป็น Fixed */
-    padding-top: 80px; 
+    padding-top: 80px; /* ดันเนื้อหาลงมาเพราะ Navbar Fixed */
+    transition: background-color 0.3s, color 0.3s;
 }
 
-/* --- Navbar Styles --- */
+/* Navbar */
 #mainNav {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     padding: 12px 0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    /* ไม่ต้องมี transition transform แล้ว เพราะเราจะตรึงไว้ */
 }
 
-/* ปุ่มแว่นขยายกลมๆ */
 .btn-circle {
-    width: 38px;
-    height: 38px;
+    width: 38px; height: 38px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: 0.2s;
 }
-.btn-circle:hover {
-    background-color: var(--primary-color);
-    color: white !important;
-}
+.btn-circle:hover { background-color: var(--primary-color); color: white !important; }
 
-/* Search Box Animation (เด้งออกมา) */
+/* Search Animation */
 .search-box-hidden {
-    width: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    margin-right: 5px;
+    width: 0; opacity: 0; overflow: hidden;
+    transition: all 0.4s; margin-right: 5px;
 }
-.search-box-active {
-    width: 200px;
-    opacity: 1;
-}
+.search-box-active { width: 200px; opacity: 1; }
 
-/* --- Hero Header --- */
+/* Hero Header */
 .hero-header {
     background: linear-gradient(135deg, #0052cc 0%, #007bff 100%);
     color: white;
-    padding: 4rem 0 5rem 0;
-    margin-bottom: 2rem;
+    padding: 4rem 0 5rem 0; margin-bottom: 2rem;
     border-radius: 0 0 50px 50px;
     box-shadow: 0 10px 30px rgba(0, 82, 204, 0.2);
 }
 
-/* ช่องค้นหาหลัก */
-#searchInput {
-    height: 55px;
-    font-size: 1.1rem;
-    border: none;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
-}
-#searchInput:focus {
-    transform: translateY(-2px);
-    transition: all 0.3s;
-}
-
-/* --- Card Design --- */
+/* Card */
 .card-hover {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    border-radius: var(--card-radius);
-    background: white;
-    overflow: hidden;
+    transition: all 0.3s; border-radius: var(--card-radius);
+    background: white; overflow: hidden;
 }
-.card-hover:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-}
-.card-img-top {
-    transition: transform 0.5s ease;
-}
-.card-hover:hover .card-img-top {
-    transform: scale(1.05);
-}
+.card-hover:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+.badge-custom { border-radius: 20px; padding: 6px 12px; font-weight: 500; }
 
-/* ป้ายหมวดหมู่ */
-.badge-custom {
-    border-radius: 20px;
-    padding: 6px 12px;
-    font-weight: 500;
-    font-size: 0.8rem;
-}
-
-/* --- Animation & Utils --- */
-.fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-    opacity: 0;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.pointer {
-    cursor: pointer;
-    transition: 0.2s;
-}
-.pointer:hover {
-    background-color: #e9ecef !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
+/* Loading */
 .loading-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: white; z-index: 9999;
     display: flex; justify-content: center; align-items: center;
 }
 
-@media (max-width: 991px) {
-    .search-box-hidden {
-        width: 100%; opacity: 1; margin-bottom: 10px;
-    }
-    .btn-circle { display: none; }
+/* ================= DARK MODE ================= */
+body.dark-mode {
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
 }
+body.dark-mode .card, 
+body.dark-mode .bg-white,
+body.dark-mode .list-group-item {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+    border-color: #333 !important;
+}
+body.dark-mode #mainNav {
+    background: rgba(30, 30, 30, 0.95) !important;
+    border-bottom: 1px solid #333;
+}
+body.dark-mode .navbar-brand, 
+body.dark-mode .nav-link,
+body.dark-mode i { color: #e0e0e0 !important; }
+body.dark-mode .text-dark { color: #f8f9fa !important; }
+body.dark-mode .text-muted { color: #adb5bd !important; }
+body.dark-mode .form-control,
+body.dark-mode .search-box-hidden input {
+    background-color: #2d3238 !important;
+    border-color: #444 !important;
+    color: #fff !important;
+}
+body.dark-mode .loading-overlay { background-color: #121212; }
