@@ -10,12 +10,14 @@
     <style>
         body { padding-top: 80px; }
         
+        /* Video Player */
         .video-container {
             position: relative; padding-bottom: 56.25%; height: 0; background: #000;
             border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
+        /* Playlist (Right Side) */
         .playlist-box {
             background: white; border: 1px solid #e9ecef; border-radius: 12px;
             overflow: hidden; height: calc(100vh - 120px); display: flex; flex-direction: column;
@@ -25,6 +27,7 @@
         }
         .playlist-content { overflow-y: auto; flex-grow: 1; }
         
+        /* Lesson Item in Playlist */
         .lesson-item {
             padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f8f9fa;
             transition: all 0.2s; display: flex; align-items: center;
@@ -32,6 +35,7 @@
         .lesson-item:hover { background-color: #f1f8ff; }
         .lesson-item.active { background-color: #e7f1ff; border-left: 4px solid #0d6efd; font-weight: 600; }
         
+        /* Progress Checkbox */
         .check-btn {
             width: 24px; height: 24px; border-radius: 50%; border: 2px solid #adb5bd;
             display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
@@ -40,19 +44,55 @@
         .check-btn:hover { border-color: #0d6efd; }
         .check-btn.completed { background-color: #198754; border-color: #198754; color: white; }
         
-        .quiz-option { cursor: pointer; transition: 0.2s; position: relative; }
-        .quiz-option:hover { background-color: #f8f9fa; }
-        .quiz-option input { cursor: pointer; }
+        /* --- [NEW] Quiz Card Layout --- */
+        .quiz-option-card {
+            background-color: white;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .quiz-option-card:hover {
+            border-color: #adb5bd;
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+        }
         
-        .quiz-option.correct {
+        /* Selected State */
+        .quiz-option-card:has(input:checked) {
+            border-color: #0d6efd;
+            background-color: #e7f1ff;
+            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.15);
+        }
+        .quiz-option-card:has(input:checked) .option-circle {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd !important;
+        }
+
+        /* Correct Answer State */
+        .quiz-option-card.correct {
             background-color: #d1e7dd !important; 
-            border-color: #badbcc !important;
+            border-color: #198754 !important;
             color: #0f5132;
         }
-        .quiz-option.wrong {
+        .quiz-option-card.correct .option-circle {
+            background-color: #198754;
+            color: white;
+            border-color: #198754 !important;
+        }
+
+        /* Wrong Answer State */
+        .quiz-option-card.wrong {
             background-color: #f8d7da !important; 
-            border-color: #f5c6cb !important;
+            border-color: #dc3545 !important;
             color: #842029;
+        }
+        .quiz-option-card.wrong .option-circle {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545 !important;
         }
         
         @media (max-width: 991px) { .playlist-box { height: auto; max-height: 500px; margin-top: 20px; } }
@@ -123,7 +163,7 @@
 
                 <div id="quizContainer" class="card border-0 shadow-sm rounded-3 mb-4 d-none bg-white">
                     <div class="card-body p-4 p-lg-5">
-                        <div class="text-center mb-4">
+                        <div class="text-center mb-5">
                             <i class="bi bi-patch-question-fill text-primary display-4"></i>
                             <h3 class="fw-bold mt-3">แบบทดสอบท้ายบท</h3>
                             <p class="text-muted" id="quizSubtitle">ตอบคำถามให้ถูกต้องเพื่อผ่านบทเรียนนี้</p>
@@ -133,12 +173,12 @@
 
                         <div id="quizResult" class="alert mt-4 text-center d-none" role="alert"></div>
 
-                        <div class="mt-4 text-center">
+                        <div class="mt-5 text-center border-top pt-4">
                             <button id="btnSubmitQuiz" onclick="submitQuiz()" class="btn btn-primary px-5 rounded-pill fw-bold btn-lg shadow-sm">
-                                <i class="bi bi-send-check"></i> ส่งคำตอบ
+                                <i class="bi bi-send-check me-2"></i> ส่งคำตอบ
                             </button>
                             <button id="btnRetryQuiz" onclick="retryQuiz()" class="btn btn-outline-warning px-5 rounded-pill fw-bold btn-lg shadow-sm d-none">
-                                <i class="bi bi-arrow-counterclockwise"></i> ทำข้อสอบใหม่
+                                <i class="bi bi-arrow-counterclockwise me-2"></i> ทำข้อสอบใหม่
                             </button>
                         </div>
                     </div>
