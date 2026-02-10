@@ -3,16 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Knowledge Base</title>
+    <title>IT Knowledge Base - คอร์สเรียนออนไลน์</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <div id="loader" class="loading-overlay">
-        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
-    </div>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { padding-top: 70px; font-family: 'Sarabun', sans-serif; }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            padding: 80px 0;
+            margin-bottom: 40px;
+            border-radius: 0 0 50px 50px;
+        }
+
+        .course-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+    </style>
+</head>
+<body class="bg-light">
 
     <div id="authModal" class="modal fade" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -22,24 +40,23 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded">
-                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tabLogin" style="font-weight: 600;">เข้าสู่ระบบ</a></li>
-                    <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tabRegister" style="font-weight: 600;">สมัครใหม่</a></li>
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tabLogin">เข้าสู่ระบบ</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tabRegister">สมัครใหม่</a></li>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="tabLogin">
                         <form id="loginForm">
-                            <input type="text" id="loginUser" class="form-control mb-3" placeholder="ชื่อผู้ใช้ (Username)" required>
+                            <input id="loginUser" class="form-control mb-3" placeholder="ชื่อผู้ใช้" required>
                             <input type="password" id="loginPass" class="form-control mb-3" placeholder="รหัสผ่าน" required>
-                            <button type="submit" class="btn btn-primary w-100 fw-bold rounded-pill">เข้าสู่ระบบ</button>
+                            <button class="btn btn-primary w-100 rounded-pill fw-bold">เข้าสู่ระบบ</button>
                         </form>
                     </div>
                     <div class="tab-pane fade" id="tabRegister">
                         <form id="regForm">
-                            <input type="text" id="regUser" class="form-control mb-2" placeholder="ตั้งชื่อผู้ใช้ (ภาษาอังกฤษ)" required>
+                            <input id="regUser" class="form-control mb-2" placeholder="ตั้งชื่อผู้ใช้" required>
                             <input type="password" id="regPass" class="form-control mb-2" placeholder="ตั้งรหัสผ่าน" required>
-                            <input type="text" id="regName" class="form-control mb-3" placeholder="ชื่อ-นามสกุล" required>
-                            <div class="alert alert-info py-2 small mb-3"><i class="bi bi-info-circle"></i> สมัครแล้วจะเป็น <b>นักเรียน (Student)</b> ทันที</div>
-                            <button type="submit" class="btn btn-success w-100 fw-bold rounded-pill">ยืนยันการสมัคร</button>
+                            <input id="regName" class="form-control mb-3" placeholder="ชื่อ-นามสกุล" required>
+                            <button class="btn btn-success w-100 rounded-pill fw-bold">สมัครสมาชิก</button>
                         </form>
                     </div>
                 </div>
@@ -47,73 +64,83 @@
         </div>
     </div>
 
-    <nav class="navbar navbar-expand-lg fixed-top" id="mainNav">
+    <nav class="navbar navbar-expand-lg fixed-top bg-white shadow-sm" id="mainNav">
         <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="index.html" style="font-size: 1.4rem;">IT Knowledge Base</a>
+            <a class="navbar-brand fw-bold text-primary" href="index.html" style="font-size: 1.5rem;">
+                <i class="bi bi-mortarboard-fill me-2"></i>IT Knowledge
+            </a>
+            
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <i class="bi bi-list fs-2 text-dark"></i>
             </button>
+
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center gap-3">
-                    <li class="nav-item"><a class="nav-link text-dark fw-medium" href="index.html">หน้าแรก</a></li>
+                    <li class="nav-item"><a class="nav-link active fw-medium" href="index.html">หน้าแรก</a></li>
                     
                     <li class="nav-item" id="authSection"></li>
 
                     <li class="border-start mx-2 d-none d-lg-block" style="height: 20px;"></li>
 
                     <li class="nav-item">
-                        <a href="admin.html" class="btn btn-dark btn-sm rounded-pill px-3 shadow-sm">
-                            <i class="bi bi-shield-lock-fill"></i> Admin
-                        </a>
+                        <a href="admin.html" class="btn btn-dark btn-sm rounded-pill px-3 shadow-sm">Admin</a>
                     </li>
 
                     <li class="nav-item">
-                        <button onclick="toggleTheme()" class="btn btn-circle btn-light shadow-sm" id="themeBtn"><i class="bi bi-moon-stars-fill"></i></button>
-                    </li>
-
-                    <li class="nav-item position-relative d-flex align-items-center">
-                        <div id="navSearchBox" class="search-box-hidden">
-                            <input type="text" id="navSearchInput" class="form-control form-control-sm rounded-pill border-0 bg-light" placeholder="ค้นหา...">
-                        </div>
-                        <button onclick="toggleSearch()" class="btn btn-circle btn-light shadow-sm text-primary"><i class="bi bi-search"></i></button>
+                        <button onclick="toggleTheme()" class="btn btn-circle btn-light shadow-sm border" id="themeBtn">
+                            <i class="bi bi-moon-stars-fill"></i>
+                        </button>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <header class="hero-header text-center">
-        <div class="container pt-4">
-            <h1 class="fw-bold mb-3 mt-4">มีปัญหาคอมฯ ให้เราช่วย</h1>
-            <p class="opacity-75 mb-4">ค้นหาวิธีแก้ไขปัญหาคอมพิวเตอร์เบื้องต้นด้วยตัวคุณเอง</p>
-            <div class="col-md-8 mx-auto position-relative">
-                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                <input type="text" id="searchInput" class="form-control form-control-lg rounded-pill shadow-sm ps-5" placeholder="พิมพ์อาการที่พบ...">
+    <header class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-3">เรียนรู้ทักษะ IT ไปด้วยกัน</h1>
+            <p class="lead mb-4 opacity-75">แหล่งรวมความรู้ บทเรียน และแบบทดสอบเพื่อพัฒนาศักยภาพของคุณ</p>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-0" placeholder="ค้นหาคอร์สเรียน...">
+                        <button class="btn btn-light px-4 fw-bold text-primary">ค้นหา</button>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
 
-    <div class="container mb-5" style="margin-top: -30px;">
-        <div class="d-flex justify-content-center gap-2 mb-5">
-            <button onclick="filterCat('All')" class="btn btn-light rounded-pill shadow-sm active border fw-bold px-4" id="btnAll">ทั้งหมด</button>
-            <button onclick="filterCat('Hardware')" class="btn btn-light rounded-pill shadow-sm border px-3" id="btnHardware">Hardware</button>
-            <button onclick="filterCat('Software')" class="btn btn-light rounded-pill shadow-sm border px-3" id="btnSoftware">Software</button>
-            <button onclick="filterCat('Network')" class="btn btn-light rounded-pill shadow-sm border px-3" id="btnNetwork">Network</button>
+    <div class="container pb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+            <h3 class="fw-bold text-dark m-0">
+                <i class="bi bi-grid-fill text-primary me-2"></i> คอร์สเรียนทั้งหมด
+            </h3>
         </div>
-        <div class="row g-4" id="grid"></div>
-        <div id="noResult" class="text-center text-muted mt-5 d-none"><p class="fs-5">ไม่พบข้อมูล</p></div>
+
+        <div class="row g-4" id="courseContainer">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 text-muted">กำลังโหลดคอร์สเรียน...</div>
+            </div>
+        </div>
     </div>
 
-    <div class="container py-5 border-top">
-        <h3 class="fw-bold mb-4 text-center">📚 คอร์สเรียนออนไลน์แนะนำ</h3>
-        <div class="row g-4" id="courseListContainer">
-            <div class="text-center text-muted">กำลังโหลดคอร์ส...</div>
+    <footer class="bg-white border-top py-4 mt-5">
+        <div class="container text-center text-muted small">
+            &copy; 2024 IT Knowledge Base. All rights reserved.
         </div>
-    </div>
-    
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module" src="js/home.js"></script>
+    
+    <script type="module" src="js/index.js"></script>
+    
     <script type="module" src="js/user_auth.js"></script>
 
     <script>
@@ -131,4 +158,3 @@
     </script>
 </body>
 </html>
-
