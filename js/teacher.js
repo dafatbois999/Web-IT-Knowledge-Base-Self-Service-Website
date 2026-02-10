@@ -157,8 +157,8 @@ window.deleteCourse = async (id) => {
 }
 
 window.manageCourse = (id) => {
-    alert(`ระบบจัดการบทเรียนสำหรับคอร์ส ID: ${id} (เดี๋ยวเราทำหน้านี้กันต่อครับ!)`);
-    // window.location.href = `manage_course.html?id=${id}`;
+    // พาไปหน้าจัดการคอร์ส พร้อมส่ง id ไปด้วย
+    window.location.href = `manage_course.html?id=${id}`;
 }
 
 window.logout = () => {
