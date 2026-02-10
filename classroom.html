@@ -10,14 +10,12 @@
     <style>
         body { padding-top: 80px; }
         
-        /* Video Player */
         .video-container {
             position: relative; padding-bottom: 56.25%; height: 0; background: #000;
             border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
-        /* Playlist (Right Side) */
         .playlist-box {
             background: white; border: 1px solid #e9ecef; border-radius: 12px;
             overflow: hidden; height: calc(100vh - 120px); display: flex; flex-direction: column;
@@ -27,7 +25,6 @@
         }
         .playlist-content { overflow-y: auto; flex-grow: 1; }
         
-        /* Lesson Item in Playlist */
         .lesson-item {
             padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f8f9fa;
             transition: all 0.2s; display: flex; align-items: center;
@@ -35,7 +32,6 @@
         .lesson-item:hover { background-color: #f1f8ff; }
         .lesson-item.active { background-color: #e7f1ff; border-left: 4px solid #0d6efd; font-weight: 600; }
         
-        /* Progress Checkbox */
         .check-btn {
             width: 24px; height: 24px; border-radius: 50%; border: 2px solid #adb5bd;
             display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
@@ -44,7 +40,6 @@
         .check-btn:hover { border-color: #0d6efd; }
         .check-btn.completed { background-color: #198754; border-color: #198754; color: white; }
         
-        /* --- [NEW] Quiz Card Layout --- */
         .quiz-option-card {
             background-color: white;
             border: 1px solid #e9ecef;
@@ -58,8 +53,6 @@
             background-color: #f8f9fa;
             transform: translateY(-2px);
         }
-        
-        /* Selected State */
         .quiz-option-card:has(input:checked) {
             border-color: #0d6efd;
             background-color: #e7f1ff;
@@ -70,8 +63,6 @@
             color: white;
             border-color: #0d6efd !important;
         }
-
-        /* Correct Answer State */
         .quiz-option-card.correct {
             background-color: #d1e7dd !important; 
             border-color: #198754 !important;
@@ -82,8 +73,6 @@
             color: white;
             border-color: #198754 !important;
         }
-
-        /* Wrong Answer State */
         .quiz-option-card.wrong {
             background-color: #f8d7da !important; 
             border-color: #dc3545 !important;
@@ -157,6 +146,20 @@
             
             <div class="col-lg-8 col-xl-9">
                 
+                <div class="card border-0 shadow-sm rounded-3 mb-4">
+                    <div class="card-body p-4 p-lg-5">
+                        <h2 id="lessonTitle" class="fw-bold mb-3 text-dark">...</h2>
+                        <div class="d-flex align-items-center gap-2 text-muted small mb-4">
+                            <i class="bi bi-collection-play"></i>
+                            <span id="courseName">Loading...</span>
+                        </div>
+                        <hr class="opacity-10 mb-4">
+                        <div id="lessonContent" class="text-secondary" style="font-size: 1.1rem; line-height: 1.7;">
+                            กำลังโหลดเนื้อหา...
+                        </div>
+                    </div>
+                </div>
+
                 <div id="videoContainer" class="video-container mb-4 d-none">
                     <iframe id="mainVideo" src="" title="Video player" frameborder="0" allowfullscreen></iframe>
                 </div>
@@ -184,19 +187,6 @@
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body p-4 p-lg-5">
-                        <h2 id="lessonTitle" class="fw-bold mb-3 text-dark">...</h2>
-                        <div class="d-flex align-items-center gap-2 text-muted small mb-4">
-                            <i class="bi bi-collection-play"></i>
-                            <span id="courseName">Loading...</span>
-                        </div>
-                        <hr class="opacity-10 mb-4">
-                        <div id="lessonContent" class="text-secondary" style="font-size: 1.1rem; line-height: 1.7;">
-                            กำลังโหลดเนื้อหา...
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div class="col-lg-4 col-xl-3">
