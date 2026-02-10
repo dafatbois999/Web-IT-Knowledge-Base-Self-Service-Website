@@ -8,28 +8,30 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* CSS เฉพาะหน้าห้องเรียน */
+        /* จัดระยะด้านบนเพราะ Navbar เป็นแบบ Fixed */
         body { padding-top: 80px; }
         
+        /* สไตล์จอวิดีโอ */
         .video-container {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 */
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
             height: 0;
             background: #000;
-            border-radius: 15px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .video-container iframe {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         }
 
+        /* สไตล์ Playlist ด้านขวา */
         .playlist-box {
             background: white;
-            border-radius: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
             overflow: hidden;
-            border: 1px solid #eee;
-            height: calc(100vh - 120px);
+            height: calc(100vh - 120px); /* สูงเต็มจอพอดี */
             display: flex;
             flex-direction: column;
         }
@@ -37,9 +39,9 @@
         .playlist-header {
             padding: 15px 20px;
             background: #f8f9fa;
-            border-bottom: 1px solid #eee;
-            font-weight: bold;
-            color: #0d6efd;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+            color: #495057;
         }
 
         .playlist-content {
@@ -51,29 +53,22 @@
             padding: 15px 20px;
             cursor: pointer;
             border-bottom: 1px solid #f8f9fa;
-            transition: 0.2s;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            justify-content: space-between;
         }
         .lesson-item:hover { background-color: #f1f8ff; }
         .lesson-item.active {
             background-color: #e7f1ff;
             border-left: 4px solid #0d6efd;
+            font-weight: 600;
         }
-        .lesson-icon { font-size: 1.2rem; color: #6c757d; }
+        .lesson-icon { margin-right: 12px; font-size: 1.1rem; color: #6c757d; }
         .lesson-item.active .lesson-icon { color: #0d6efd; }
 
-        /* Dark Mode Support for Playlist */
-        body.dark-mode .playlist-box { background-color: #1e1e1e; border-color: #333; }
-        body.dark-mode .playlist-header { background-color: #2d2d2d; border-color: #333; }
-        body.dark-mode .lesson-item { border-color: #333; color: #e0e0e0; }
-        body.dark-mode .lesson-item:hover { background-color: #333; }
-        body.dark-mode .lesson-item.active { background-color: #0d6efd; color: white; }
-        body.dark-mode .lesson-item.active .lesson-icon { color: white; }
-
+        /* Responsive */
         @media (max-width: 991px) {
-            .playlist-box { height: auto; max-height: 500px; }
+            .playlist-box { height: auto; max-height: 500px; margin-top: 20px; }
         }
     </style>
 </head>
@@ -114,7 +109,7 @@
     <nav class="navbar navbar-expand-lg fixed-top" id="mainNav">
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold text-primary" href="index.html" style="font-size: 1.4rem;">
-                <i class="bi bi-chevron-left text-dark me-2" style="font-size: 1rem;"></i> IT Knowledge Base
+                IT Knowledge Base
             </a>
             
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -149,20 +144,21 @@
                     <iframe id="mainVideo" src="" title="Video player" frameborder="0" allowfullscreen></iframe>
                 </div>
                 
-                <div id="noVideoPlaceholder" class="bg-white rounded-4 p-5 text-center shadow-sm mb-4 d-flex flex-column align-items-center justify-content-center" style="height: 400px; display:none;">
-                    <i class="bi bi-play-btn display-1 text-muted opacity-25 mb-3"></i>
-                    <h4 class="text-muted">เลือกบทเรียนเพื่อเริ่มเรียน</h4>
+                <div id="noVideoPlaceholder" class="bg-white rounded-3 border p-5 text-center mb-4 d-flex flex-column align-items-center justify-content-center" style="height: 400px; display:none;">
+                    <i class="bi bi-play-circle display-1 text-muted opacity-25 mb-3"></i>
+                    <h5 class="text-muted">เลือกบทเรียนทางขวาเพื่อเริ่มเรียน</h5>
                 </div>
 
-                <div class="card border-0 shadow-sm rounded-4">
+                <div class="card border-0 shadow-sm rounded-3">
                     <div class="card-body p-4 p-lg-5">
                         <h2 id="lessonTitle" class="fw-bold mb-3 text-dark">...</h2>
-                        <div class="d-flex align-items-center gap-3 text-muted small mb-4">
-                            <span><i class="bi bi-book"></i> <span id="courseName">Loading...</span></span>
+                        <div class="d-flex align-items-center gap-2 text-muted small mb-4">
+                            <i class="bi bi-collection-play"></i>
+                            <span id="courseName">Loading...</span>
                         </div>
                         <hr class="opacity-10 mb-4">
-                        <div id="lessonContent" class="text-secondary" style="font-size: 1.1rem; line-height: 1.8;">
-                            กรุณาเลือกบทเรียนจากรายการทางด้านขวา
+                        <div id="lessonContent" class="text-secondary" style="font-size: 1.1rem; line-height: 1.7;">
+                            กำลังโหลดเนื้อหา...
                         </div>
                     </div>
                 </div>
@@ -170,8 +166,8 @@
 
             <div class="col-lg-4 col-xl-3">
                 <div class="playlist-box">
-                    <div class="playlist-header">
-                        <i class="bi bi-list-task me-2"></i> เนื้อหาบทเรียน
+                    <div class="playlist-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-list-ul me-2"></i> เนื้อหาบทเรียน</span>
                     </div>
                     <div id="playlist" class="playlist-content">
                         <div class="text-center py-5 text-muted">
@@ -191,6 +187,7 @@
     <script type="module" src="js/user_auth.js"></script>
 
     <script>
+        // Dark Mode
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
             document.getElementById('themeBtn').querySelector('i').className = 'bi bi-sun-fill text-warning';
