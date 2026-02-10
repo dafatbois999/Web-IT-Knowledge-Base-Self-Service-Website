@@ -19,14 +19,12 @@ initClassroom();
 
 async function initClassroom() {
     try {
-        // 1. ดึงชื่อคอร์ส
         const { data: course } = await supabase.from('courses').select('title').eq('id', courseId).single();
         if (course) {
             document.getElementById('courseName').innerText = course.title;
             document.title = `${course.title} - ห้องเรียนออนไลน์`;
         }
 
-        // 2. ดึงบทเรียน (รวมถึง pdf_url ที่เพิ่มมาใหม่)
         const { data: lessons, error } = await supabase
             .from('lessons')
             .select('*')
@@ -37,7 +35,6 @@ async function initClassroom() {
         if (error) throw error;
         allLessons = lessons || [];
 
-        // 3. ดึงความคืบหน้า
         if (userId) {
             const { data: progress } = await supabase
                 .from('student_progress')
@@ -54,7 +51,7 @@ async function initClassroom() {
         }
 
         renderPlaylist();
-        updateProgressBar();
+        updateProgressBar(false); // false = ไม่เด้ง popup ตอนโหลด
         if (allLessons.length > 0) loadLesson(0);
         else document.getElementById('playlist').innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหา</div>';
 
@@ -101,16 +98,24 @@ window.toggleComplete = async (e, lessonId) => {
         await supabase.from('student_progress').insert({ user_id: userId, lesson_id: lessonId, course_id: courseId });
     }
     renderPlaylist();
-    updateProgressBar();
+    updateProgressBar(true); // true = เช็ค popup
 };
 
-function updateProgressBar() {
+function updateProgressBar(isUpdate = false) {
     if (allLessons.length === 0) return;
     const percent = Math.round((completedLessonIds.size / allLessons.length) * 100);
     const bar = document.getElementById('progressBar');
     const txt = document.getElementById('progressPercent');
     if(bar) bar.style.width = `${percent}%`;
     if(txt) txt.innerText = `${percent}%`;
+
+    if (percent === 100 && isUpdate) {
+        const modalEl = document.getElementById('congratsModal');
+        if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+    }
 }
 
 window.changeLesson = (index) => {
@@ -119,9 +124,6 @@ window.changeLesson = (index) => {
     loadLesson(index);
 };
 
-// ==========================================
-// ส่วนที่แก้ไข: เพิ่มการแสดงปุ่ม PDF
-// ==========================================
 function loadLesson(index) {
     const lesson = allLessons[index];
     if (!lesson) return;
@@ -132,13 +134,11 @@ function loadLesson(index) {
     const quizBox = document.getElementById('quizContainer');
     const iframe = document.getElementById('mainVideo');
 
-    // Reset หน้าจอ
     videoBox.classList.add('d-none');
     quizBox.classList.add('d-none');
     iframe.src = "";
     contentEl.innerHTML = "";
 
-    // กรณีเป็น QUIZ
     if (lesson.type === 'quiz') {
         try {
             currentQuizData = JSON.parse(lesson.content || '[]');
@@ -167,10 +167,7 @@ function loadLesson(index) {
         return; 
     }
 
-    // กรณีเป็น LESSON (VDO/เนื้อหา)
     contentEl.innerHTML = lesson.content ? lesson.content.replace(/\n/g, '<br>') : "ไม่มีรายละเอียดเนื้อหา";
-    
-    // โชว์วิดีโอ
     if (lesson.video_url && lesson.video_url.length > 5) {
         let videoId = "";
         try {
@@ -181,7 +178,6 @@ function loadLesson(index) {
         if (videoId) { iframe.src = `https://www.youtube.com/embed/${videoId}`; videoBox.classList.remove('d-none'); }
     }
 
-    // --- [สำคัญ] โชว์ปุ่ม PDF ถ้ามีลิงก์ ---
     if (lesson.pdf_url) {
         contentEl.innerHTML += `
             <div class="mt-4 pt-4 border-top">
@@ -223,11 +219,9 @@ function restoreQuizState(savedData) {
     savedData.answers.forEach((ansIndex, qIndex) => {
         const radio = document.querySelector(`input[name="q${qIndex}"][value="${ansIndex}"]`);
         if (radio) radio.checked = true;
-
         const correctAns = parseInt(currentQuizData[qIndex].answer);
         const correctBox = document.getElementById(`opt_${qIndex}_${correctAns}`);
         if(correctBox) correctBox.classList.add('correct');
-
         if (ansIndex !== correctAns) {
             const wrongBox = document.getElementById(`opt_${qIndex}_${ansIndex}`);
             if(wrongBox) wrongBox.classList.add('wrong');
@@ -297,7 +291,8 @@ window.submitQuiz = async () => {
             await supabase.from('student_progress').insert({
                 user_id: userId, lesson_id: currentLesson.id, course_id: courseId, quiz_data: quizDataToSave
             });
-            renderPlaylist(); updateProgressBar();
+            renderPlaylist(); 
+            updateProgressBar(true); // true = เช็ค popup
         }
 
     } else {
