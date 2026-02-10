@@ -2,8 +2,10 @@ import { supabase } from './supabase-config.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const courseId = urlParams.get('id');
+const userId = localStorage.getItem('user_id'); // ดึง ID คนเรียน
 
 let allLessons = [];
+let completedLessonIds = new Set(); // เก็บ ID บทที่เรียนจบแล้ว
 let currentLessonIndex = 0;
 
 if (!courseId) {
@@ -15,57 +17,54 @@ initClassroom();
 
 async function initClassroom() {
     try {
-        console.log("Start loading course ID:", courseId);
-
         // 1. ดึงชื่อคอร์ส
         const { data: course } = await supabase.from('courses').select('title').eq('id', courseId).single();
         if (course) {
-            // ใส่ชื่อคอร์สตรงเนื้อหา
             const nameEl = document.getElementById('courseName');
             if(nameEl) nameEl.innerText = course.title;
             document.title = `${course.title} - ห้องเรียนออนไลน์`;
         }
 
-        // 2. ดึงบทเรียน (ปรับใหม่: เรียงตาม ID แทน created_at เพื่อแก้ปัญหา Database ไม่ตรง)
+        // 2. ดึงบทเรียน
         const { data: lessons, error } = await supabase
             .from('lessons')
             .select('*')
             .eq('course_id', courseId)
-            .order('order_index', { ascending: true }) 
-            .order('id', { ascending: true }); // ใช้ ID แทน created_at ชั่วคราว
+            .order('order_index', { ascending: true })
+            .order('id', { ascending: true });
 
         if (error) throw error;
+        allLessons = lessons || [];
 
-        // 3. แสดงผล Playlist
-        const playlistBox = document.getElementById('playlist');
-        
-        if (!lessons || lessons.length === 0) {
-            if(playlistBox) playlistBox.innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหาในคอร์สนี้</div>';
+        // 3. ดึง Progress (ถ้าล็อกอินอยู่)
+        if (userId) {
+            const { data: progress } = await supabase
+                .from('student_progress')
+                .select('lesson_id')
+                .eq('user_id', userId)
+                .eq('course_id', courseId);
             
-            const titleEl = document.getElementById('lessonTitle');
-            if(titleEl) titleEl.innerText = "ยังไม่มีบทเรียน";
-            
-            const contentEl = document.getElementById('lessonContent');
-            if(contentEl) contentEl.innerText = "คุณครูยังไม่ได้เพิ่มเนื้อหา";
-            
-            const noVid = document.getElementById('noVideoPlaceholder');
-            if(noVid) noVid.style.display = 'flex';
-            return;
+            if (progress) {
+                progress.forEach(p => completedLessonIds.add(p.lesson_id));
+            }
         }
 
-        allLessons = lessons;
+        // 4. แสดงผล
         renderPlaylist();
-        loadLesson(0); // เล่นบทแรกอัตโนมัติ
+        updateProgressBar();
+        
+        if (allLessons.length > 0) {
+            loadLesson(0);
+        } else {
+            document.getElementById('playlist').innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหา</div>';
+        }
 
     } catch (err) {
-        console.error("Error Detail:", err);
-        // แจ้งเตือนถ้าเป็น Error จาก SQL
-        if (err.code === '42703') {
-            alert('Database Error: คอลัมน์ไม่ครบ กรุณารัน SQL เพิ่มคอลัมน์ (ดูใน Console)');
-        }
+        console.error("Error:", err);
     }
 }
 
+// อัปเดต UI Playlist
 function renderPlaylist() {
     const list = document.getElementById('playlist');
     if (!list) return;
@@ -73,40 +72,85 @@ function renderPlaylist() {
 
     allLessons.forEach((l, index) => {
         const isActive = index === currentLessonIndex ? 'active' : '';
-        const icon = l.video_url ? '<i class="bi bi-play-circle-fill lesson-icon"></i>' : '<i class="bi bi-file-text-fill lesson-icon"></i>';
+        const isCompleted = completedLessonIds.has(l.id) ? 'completed' : '';
+        const checkIcon = completedLessonIds.has(l.id) ? '<i class="bi bi-check-lg"></i>' : '';
 
         list.innerHTML += `
-            <div class="lesson-item ${isActive}" onclick="changeLesson(${index})">
-                <div class="d-flex align-items-center w-100">
+            <div class="lesson-item ${isActive}">
+                <div class="check-btn ${isCompleted}" onclick="toggleComplete(event, ${l.id})">
+                    ${checkIcon}
+                </div>
+
+                <div class="d-flex align-items-center flex-grow-1" onclick="changeLesson(${index})">
                     <span class="small text-muted me-3 fw-bold">${index + 1}.</span>
                     <div class="flex-grow-1">
                         <div class="fw-bold" style="font-size: 0.95rem;">${l.title}</div>
                     </div>
-                    ${icon}
+                    ${l.video_url ? '<i class="bi bi-play-circle-fill text-muted"></i>' : '<i class="bi bi-file-text-fill text-muted"></i>'}
                 </div>
             </div>
         `;
     });
 }
 
+// กดติ๊กถูก / เอาออก
+window.toggleComplete = async (e, lessonId) => {
+    e.stopPropagation(); // ไม่ให้ไป trigger การเปลี่ยนบทเรียน
+    if (!userId) return alert('กรุณาเข้าสู่ระบบเพื่อบันทึกความคืบหน้า');
+
+    const btn = e.currentTarget;
+    
+    if (completedLessonIds.has(lessonId)) {
+        // --- เอาออก (Uncheck) ---
+        completedLessonIds.delete(lessonId);
+        await supabase.from('student_progress').delete().eq('user_id', userId).eq('lesson_id', lessonId);
+    } else {
+        // --- ติ๊กถูก (Check) ---
+        completedLessonIds.add(lessonId);
+        await supabase.from('student_progress').insert({
+            user_id: userId,
+            lesson_id: lessonId,
+            course_id: courseId
+        });
+    }
+
+    renderPlaylist(); // รีเฟรชไอคอน
+    updateProgressBar(); // คำนวณ % ใหม่
+};
+
+// คำนวณเปอร์เซ็นต์
+function updateProgressBar() {
+    if (allLessons.length === 0) return;
+    const percent = Math.round((completedLessonIds.size / allLessons.length) * 100);
+    
+    document.getElementById('progressBar').style.width = `${percent}%`;
+    document.getElementById('progressPercent').innerText = `${percent}%`;
+    
+    // เปลี่ยนสีเมื่อครบ 100%
+    if (percent === 100) {
+        document.getElementById('progressPercent').classList.replace('bg-success', 'bg-warning');
+        document.getElementById('progressPercent').innerText = '🎉 100%';
+    } else {
+        document.getElementById('progressPercent').classList.replace('bg-warning', 'bg-success');
+    }
+}
+
 window.changeLesson = (index) => {
     currentLessonIndex = index;
     renderPlaylist();
     loadLesson(index);
-}
+};
 
 function loadLesson(index) {
     const lesson = allLessons[index];
     if (!lesson) return;
 
-    // ใส่เนื้อหา
     const titleEl = document.getElementById('lessonTitle');
     if(titleEl) titleEl.innerText = lesson.title;
     
     const contentEl = document.getElementById('lessonContent');
     if(contentEl) contentEl.innerText = lesson.content || "ไม่มีรายละเอียดเนื้อหา";
 
-    // จัดการวิดีโอ
     const videoBox = document.getElementById('videoContainer');
     const noVideoBox = document.getElementById('noVideoPlaceholder');
     const iframe = document.getElementById('mainVideo');
@@ -123,12 +167,8 @@ function loadLesson(index) {
             iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
             if(videoBox) videoBox.classList.remove('d-none');
             if(noVideoBox) noVideoBox.style.display = 'none';
-        } else {
-            showNoVideo();
-        }
-    } else {
-        showNoVideo();
-    }
+        } else { showNoVideo(); }
+    } else { showNoVideo(); }
 
     function showNoVideo() {
         if(iframe) iframe.src = "";
