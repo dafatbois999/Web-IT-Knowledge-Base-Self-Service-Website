@@ -71,14 +71,17 @@ async function saveOrder() {
     }
 }
 
-// === [NEW] ฟังก์ชันอัปโหลดรูปและแทรกลงใน Textarea ===
+// === [แก้ไข 1] เปลี่ยนชื่อไฟล์รูปภาพเป็นภาษาอังกฤษ ===
 window.uploadAndInsertImage = async () => {
     const fileInput = document.getElementById('insertImgFile');
     const file = fileInput.files[0];
     if (!file) return;
 
-    // Upload
-    const fileName = `lesson_img_${Date.now()}_${file.name}`;
+    // ดึงนามสกุลไฟล์ (เช่น .jpg, .png)
+    const fileExt = file.name.split('.').pop();
+    // ตั้งชื่อใหม่เป็นตัวเลขเวลา (เพื่อเลี่ยงภาษาไทย)
+    const fileName = `lesson_img_${Date.now()}.${fileExt}`;
+
     const { error } = await supabase.storage.from('images').upload(fileName, file);
     
     if (error) {
@@ -86,21 +89,18 @@ window.uploadAndInsertImage = async () => {
         return;
     }
 
-    // Get URL
     const { data } = supabase.storage.from('images').getPublicUrl(fileName);
     const imgUrl = data.publicUrl;
 
-    // Insert HTML tag into textarea
     const textarea = document.getElementById('lContent');
     const imgTag = `\n<img src="${imgUrl}" class="img-fluid rounded shadow-sm my-3" style="max-height: 400px;">\n`;
     
-    // แทรกตรงจุดที่ Cursor อยู่
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const text = textarea.value;
     textarea.value = text.substring(0, start) + imgTag + text.substring(end);
     
-    fileInput.value = ''; // Reset input
+    fileInput.value = ''; 
 };
 
 window.switchType = (type) => {
@@ -118,7 +118,7 @@ window.resetForm = () => {
     document.getElementById('btnDelete').classList.add('d-none');
     document.getElementById('questionContainer').innerHTML = ''; 
     document.getElementById('qPassScore').value = 50;
-    document.getElementById('currentPdfLink').innerHTML = ''; // Clear PDF Link
+    document.getElementById('currentPdfLink').innerHTML = ''; 
     switchType('lesson');
 };
 
@@ -169,10 +169,11 @@ window.editLesson = async (id) => {
             document.getElementById('lVideo').value = data.video_url || '';
             document.getElementById('lContent').value = data.content || '';
             
-            // Show current PDF if exists
             const pdfDiv = document.getElementById('currentPdfLink');
             if (data.pdf_url) {
-                pdfDiv.innerHTML = `<a href="${data.pdf_url}" target="_blank" class="text-danger"><i class="bi bi-file-earmark-pdf-fill"></i> ดูไฟล์ PDF ปัจจุบัน</a>`;
+                // ตัดชื่อไฟล์มาแสดงสั้นๆ
+                const fileName = data.pdf_url.split('/').pop().split('?')[0]; 
+                pdfDiv.innerHTML = `<a href="${data.pdf_url}" target="_blank" class="text-danger"><i class="bi bi-file-earmark-pdf-fill"></i> ${fileName}</a>`;
             } else {
                 pdfDiv.innerHTML = '';
             }
@@ -194,15 +195,23 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     let passing_score = 50;
     let pdf_url = null;
 
-    // === [NEW] Logic อัปโหลด PDF ===
+    // === [แก้ไข 2] เปลี่ยนชื่อไฟล์ PDF เป็นภาษาอังกฤษ ===
     const pdfFile = document.getElementById('lPdfFile').files[0];
     if (pdfFile) {
-        const fileName = `lesson_pdf_${Date.now()}_${pdfFile.name}`;
-        const { error } = await supabase.storage.from('images').upload(fileName, pdfFile); // ใช้ Bucket 'images' ไปเลยง่ายดี
-        if (!error) {
-            const { data } = supabase.storage.from('images').getPublicUrl(fileName);
-            pdf_url = data.publicUrl;
+        // ดึงนามสกุลไฟล์
+        const fileExt = pdfFile.name.split('.').pop();
+        // ตั้งชื่อใหม่เป็น lesson_pdf_ตามด้วยเวลา.pdf (ปลอดภัยแน่นอน)
+        const fileName = `lesson_pdf_${Date.now()}.${fileExt}`;
+        
+        const { error } = await supabase.storage.from('images').upload(fileName, pdfFile);
+        if (error) {
+            alert('PDF Upload Error: ' + error.message);
+            btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
+            return;
         }
+        
+        const { data } = supabase.storage.from('images').getPublicUrl(fileName);
+        pdf_url = data.publicUrl;
     }
 
     if (type === 'lesson') {
@@ -235,7 +244,7 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
 
     const payload = { title, type, video_url, content, course_id: courseId, passing_score };
     if (!id) payload.order_index = orderIndex;
-    if (pdf_url) payload.pdf_url = pdf_url; // อัปเดตเฉพาะถ้ามีการอัปโหลดไฟล์ใหม่
+    if (pdf_url) payload.pdf_url = pdf_url;
 
     let error;
     if (id) {
