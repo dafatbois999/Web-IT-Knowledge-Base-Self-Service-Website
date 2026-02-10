@@ -21,11 +21,11 @@ async function initClassroom() {
     try {
         const { data: course } = await supabase.from('courses').select('title').eq('id', courseId).single();
         if (course) {
-            const nameEl = document.getElementById('courseName');
-            if(nameEl) nameEl.innerText = course.title;
+            document.getElementById('courseName').innerText = course.title;
             document.title = `${course.title} - ห้องเรียนออนไลน์`;
         }
 
+        // ดึงข้อมูล lessons รวมถึง pdf_url
         const { data: lessons, error } = await supabase
             .from('lessons')
             .select('*')
@@ -46,9 +46,7 @@ async function initClassroom() {
             if (progress) {
                 progress.forEach(p => {
                     completedLessonIds.add(p.lesson_id);
-                    if (p.quiz_data) {
-                        studentProgressMap[p.lesson_id] = p.quiz_data; 
-                    }
+                    if (p.quiz_data) studentProgressMap[p.lesson_id] = p.quiz_data; 
                 });
             }
         }
@@ -70,7 +68,7 @@ function renderPlaylist() {
         const isActive = index === currentLessonIndex ? 'active' : '';
         const isCompleted = completedLessonIds.has(l.id) ? 'completed' : '';
         const checkIcon = completedLessonIds.has(l.id) ? '<i class="bi bi-check-lg"></i>' : '';
-        let typeIcon = l.type === 'quiz' ? '<i class="bi bi-patch-question-fill text-warning"></i>' : '<i class="bi bi-play-circle-fill text-muted"></i>';
+        let typeIcon = l.type === 'quiz' ? '<i class="bi bi-patch-question-fill text-warning"></i>' : '<i class="bi bi-file-earmark-text-fill text-muted"></i>';
 
         list.innerHTML += `
             <div class="lesson-item ${isActive}">
@@ -134,6 +132,7 @@ function loadLesson(index) {
     iframe.src = "";
     contentEl.innerHTML = "";
 
+    // === QUIZ MODE ===
     if (lesson.type === 'quiz') {
         try {
             currentQuizData = JSON.parse(lesson.content || '[]');
@@ -149,7 +148,6 @@ function loadLesson(index) {
             btnRetry.classList.add('d-none');
             
             const passScore = lesson.passing_score || 50; 
-            
             const quizSub = document.getElementById('quizSubtitle');
             if(quizSub) quizSub.innerText = `ตอบคำถามให้ถูกต้องเพื่อผ่านบทเรียนนี้ (เกณฑ์ ${passScore}%)`;
 
@@ -163,7 +161,11 @@ function loadLesson(index) {
         return; 
     }
 
-    contentEl.innerText = lesson.content || "ไม่มีรายละเอียดเนื้อหา";
+    // === LESSON MODE ===
+    // [สำคัญ] ใช้ innerHTML เพื่อให้แสดงรูปภาพได้
+    contentEl.innerHTML = lesson.content ? lesson.content.replace(/\n/g, '<br>') : "ไม่มีรายละเอียดเนื้อหา";
+    
+    // แสดงวิดีโอ
     if (lesson.video_url && lesson.video_url.length > 5) {
         let videoId = "";
         try {
@@ -173,9 +175,19 @@ function loadLesson(index) {
         } catch (e) {}
         if (videoId) { iframe.src = `https://www.youtube.com/embed/${videoId}`; videoBox.classList.remove('d-none'); }
     }
+
+    // === [NEW] แสดงปุ่มโหลด PDF (ถ้ามี) ===
+    if (lesson.pdf_url) {
+        contentEl.innerHTML += `
+            <div class="mt-4 pt-4 border-top">
+                <a href="${lesson.pdf_url}" target="_blank" class="btn btn-outline-danger w-100 rounded-pill py-2">
+                    <i class="bi bi-file-earmark-pdf-fill me-2"></i> ดาวน์โหลดเอกสารประกอบการเรียน (PDF)
+                </a>
+            </div>
+        `;
+    }
 }
 
-// --- [ปรับปรุง] ฟังก์ชันสร้าง Layout ข้อสอบ ---
 function renderQuiz(questions) {
     const container = document.getElementById('quizBody');
     container.innerHTML = '';
@@ -184,31 +196,22 @@ function renderQuiz(questions) {
     questions.forEach((q, index) => {
         let optionsHtml = '';
         q.options.forEach((opt, optIndex) => {
-            // ใช้ Layout ใหม่: Label ครอบ Input (ซ่อน) + วงกลมตัวเลข + ข้อความ
             optionsHtml += `
                 <label class="quiz-option-card d-flex align-items-center p-3 mb-3 border rounded-3 w-100" id="opt_${index}_${optIndex}">
                     <input class="d-none" type="radio" name="q${index}" value="${optIndex}">
-                    
                     <div class="option-circle d-flex align-items-center justify-content-center rounded-circle border me-3 flex-shrink-0" 
                          style="width: 40px; height: 40px; font-weight: bold; color: #6c757d; border-color: #dee2e6; transition:0.2s;">
                         ${optIndex + 1}
                     </div>
-                    
                     <span class="option-text text-dark" style="font-size: 1rem;">${opt}</span>
                 </label>`;
         });
-        container.innerHTML += `
-            <div class="mb-5">
-                <h5 class="fw-bold mb-3 text-dark">${index + 1}. ${q.q}</h5>
-                ${optionsHtml}
-            </div>`;
+        container.innerHTML += `<div class="mb-5"><h5 class="fw-bold mb-3 text-dark">${index + 1}. ${q.q}</h5>${optionsHtml}</div>`;
     });
 }
 
 function restoreQuizState(savedData) {
     if (!savedData || !savedData.answers) return;
-    
-    // ล็อกและแสดงผล
     const inputs = document.querySelectorAll('#quizBody input');
     inputs.forEach(inp => inp.disabled = true);
 
