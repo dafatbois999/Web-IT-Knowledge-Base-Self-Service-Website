@@ -25,11 +25,11 @@
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-list-ul"></i> บทเรียนทั้งหมด</h5>
                         <button onclick="resetForm()" class="btn btn-sm btn-success rounded-pill px-3">
-                            <i class="bi bi-plus-lg"></i> เพิ่มบท
+                            <i class="bi bi-plus-lg"></i> เพิ่ม
                         </button>
                     </div>
                     <div class="card-body p-0">
-                        <div id="lessonList" class="list-group list-group-flush">
+                        <div id="lessonList" class="list-group list-group-flush" style="max-height: 70vh; overflow-y: auto;">
                             <div class="text-center py-4 text-muted">กำลังโหลด...</div>
                         </div>
                     </div>
@@ -39,28 +39,53 @@
             <div class="col-md-8">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white py-3">
-                        <h5 class="mb-0 fw-bold text-dark" id="formTitle">เพิ่มบทเรียนใหม่</h5>
+                        <h5 class="mb-0 fw-bold text-dark" id="formTitle">เพิ่มเนื้อหาใหม่</h5>
                     </div>
                     <div class="card-body p-4">
+                        
+                        <ul class="nav nav-pills mb-4 bg-light p-2 rounded">
+                            <li class="nav-item w-50 text-center">
+                                <a class="nav-link active fw-bold" id="tabLesson" onclick="switchType('lesson')" href="#">
+                                    <i class="bi bi-play-btn-fill"></i> บทเรียน (VDO)
+                                </a>
+                            </li>
+                            <li class="nav-item w-50 text-center">
+                                <a class="nav-link fw-bold" id="tabQuiz" onclick="switchType('quiz')" href="#">
+                                    <i class="bi bi-patch-question-fill"></i> แบบทดสอบ (Quiz)
+                                </a>
+                            </li>
+                        </ul>
+
                         <form id="lessonForm">
-                            <input type="hidden" id="lessonId"> <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">ชื่อบทเรียน</label>
-                                <input type="text" id="lTitle" class="form-control" placeholder="เช่น บทนำ, การติดตั้งโปรแกรม" required>
+                            <input type="hidden" id="lessonId">
+                            <input type="hidden" id="lessonType" value="lesson"> <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">ชื่อหัวข้อ</label>
+                                <input type="text" id="lTitle" class="form-control" placeholder="เช่น บทที่ 1, แบบทดสอบท้ายบท" required>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">ลิงก์วิดีโอ (YouTube)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-youtube text-danger"></i></span>
-                                    <input type="text" id="lVideo" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                            <div id="sectionLesson">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small fw-bold">ลิงก์วิดีโอ (YouTube)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-youtube text-danger"></i></span>
+                                        <input type="text" id="lVideo" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold">เนื้อหาประกอบ</label>
+                                    <textarea id="lContent" class="form-control" rows="6" placeholder="พิมพ์เนื้อหาที่นี่..."></textarea>
                                 </div>
                             </div>
 
-                            <div class="mb-4">
-                                <label class="form-label text-muted small fw-bold">เนื้อหาประกอบ / รายละเอียด</label>
-                                <textarea id="lContent" class="form-control" rows="6" placeholder="พิมพ์เนื้อหาที่นี่..."></textarea>
+                            <div id="sectionQuiz" style="display: none;">
+                                <div id="questionContainer">
+                                    </div>
+                                <button type="button" class="btn btn-outline-primary w-100 mb-4 border-dashed" onclick="addQuestionUI()">
+                                    <i class="bi bi-plus-circle"></i> เพิ่มข้อคำถาม
+                                </button>
                             </div>
 
+                            <hr>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill">
                                     <i class="bi bi-save"></i> บันทึกข้อมูล
