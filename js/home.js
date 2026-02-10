@@ -92,3 +92,44 @@ window.filterCat = (cat) => {
 };
 
 loadArticles();
+
+// --- โหลดคอร์สเรียน (เพิ่มใหม่) ---
+loadCourses();
+
+async function loadCourses() {
+    const courseGrid = document.getElementById('courseListContainer');
+    if (!courseGrid) return; // ถ้าไม่มี element นี้ในหน้า ก็ไม่ต้องทำ
+
+    const { data: courses, error } = await supabase
+        .from('courses')
+        .select('*, users(full_name)') // join เอาชื่อคนสอน
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+    if (courses && courses.length > 0) {
+        courseGrid.innerHTML = '';
+        courses.forEach(c => {
+            const img = c.thumbnail_url || 'https://via.placeholder.com/400x225?text=Course';
+            const teacherName = c.users?.full_name || 'Teacher';
+            
+            courseGrid.innerHTML += `
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm border-0 card-hover">
+                        <img src="${img}" class="card-img-top" style="height: 180px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="fw-bold text-truncate">${c.title}</h5>
+                            <p class="small text-muted mb-2">โดย: ${teacherName}</p>
+                            <p class="card-text small text-secondary text-truncate-2">${c.description || '-'}</p>
+                            <a href="classroom.html?id=${c.id}" class="btn btn-outline-primary w-100 rounded-pill mt-2">
+                                เข้าเรียนทันที
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        courseGrid.innerHTML = '<div class="col-12 text-center text-muted">ยังไม่มีคอร์สเรียน</div>';
+    }
+}
+
