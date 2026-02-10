@@ -36,7 +36,7 @@ async function loadLessons() {
     }
 
     lessons.forEach((l, index) => {
-        let icon = l.type === 'quiz' ? '<i class="bi bi-patch-question-fill text-warning"></i>' : '<i class="bi bi-play-btn-fill text-primary"></i>';
+        let icon = l.type === 'quiz' ? '<i class="bi bi-patch-question-fill text-warning"></i>' : '<i class="bi bi-file-earmark-text-fill text-primary"></i>';
         
         list.innerHTML += `
             <div class="list-group-item list-group-item-action py-3 border-bottom d-flex justify-content-between align-items-center" data-id="${l.id}" onclick="editLesson('${l.id}')">
@@ -71,6 +71,38 @@ async function saveOrder() {
     }
 }
 
+// === [NEW] ฟังก์ชันอัปโหลดรูปและแทรกลงใน Textarea ===
+window.uploadAndInsertImage = async () => {
+    const fileInput = document.getElementById('insertImgFile');
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    // Upload
+    const fileName = `lesson_img_${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from('images').upload(fileName, file);
+    
+    if (error) {
+        alert('Upload Error: ' + error.message);
+        return;
+    }
+
+    // Get URL
+    const { data } = supabase.storage.from('images').getPublicUrl(fileName);
+    const imgUrl = data.publicUrl;
+
+    // Insert HTML tag into textarea
+    const textarea = document.getElementById('lContent');
+    const imgTag = `\n<img src="${imgUrl}" class="img-fluid rounded shadow-sm my-3" style="max-height: 400px;">\n`;
+    
+    // แทรกตรงจุดที่ Cursor อยู่
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    textarea.value = text.substring(0, start) + imgTag + text.substring(end);
+    
+    fileInput.value = ''; // Reset input
+};
+
 window.switchType = (type) => {
     document.getElementById('lessonType').value = type;
     document.getElementById('tabLesson').classList.toggle('active', type === 'lesson');
@@ -85,7 +117,8 @@ window.resetForm = () => {
     document.getElementById('formTitle').innerText = 'เพิ่มเนื้อหาใหม่';
     document.getElementById('btnDelete').classList.add('d-none');
     document.getElementById('questionContainer').innerHTML = ''; 
-    document.getElementById('qPassScore').value = 50; // Reset เป็น 50
+    document.getElementById('qPassScore').value = 50;
+    document.getElementById('currentPdfLink').innerHTML = ''; // Clear PDF Link
     switchType('lesson');
 };
 
@@ -126,9 +159,7 @@ window.editLesson = async (id) => {
 
         if (data.type === 'quiz') {
             switchType('quiz');
-            // [ใหม่] โหลดเกณฑ์คะแนน
             document.getElementById('qPassScore').value = data.passing_score || 50;
-            
             const questions = JSON.parse(data.content || '[]');
             const container = document.getElementById('questionContainer');
             container.innerHTML = '';
@@ -137,6 +168,14 @@ window.editLesson = async (id) => {
             switchType('lesson');
             document.getElementById('lVideo').value = data.video_url || '';
             document.getElementById('lContent').value = data.content || '';
+            
+            // Show current PDF if exists
+            const pdfDiv = document.getElementById('currentPdfLink');
+            if (data.pdf_url) {
+                pdfDiv.innerHTML = `<a href="${data.pdf_url}" target="_blank" class="text-danger"><i class="bi bi-file-earmark-pdf-fill"></i> ดูไฟล์ PDF ปัจจุบัน</a>`;
+            } else {
+                pdfDiv.innerHTML = '';
+            }
         }
     }
 };
@@ -152,15 +191,25 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     
     let content = '';
     let video_url = null;
-    let passing_score = 50; // Default
+    let passing_score = 50;
+    let pdf_url = null;
+
+    // === [NEW] Logic อัปโหลด PDF ===
+    const pdfFile = document.getElementById('lPdfFile').files[0];
+    if (pdfFile) {
+        const fileName = `lesson_pdf_${Date.now()}_${pdfFile.name}`;
+        const { error } = await supabase.storage.from('images').upload(fileName, pdfFile); // ใช้ Bucket 'images' ไปเลยง่ายดี
+        if (!error) {
+            const { data } = supabase.storage.from('images').getPublicUrl(fileName);
+            pdf_url = data.publicUrl;
+        }
+    }
 
     if (type === 'lesson') {
         video_url = document.getElementById('lVideo').value;
         content = document.getElementById('lContent').value;
     } else {
-        // [ใหม่] รับค่า Passing Score
         passing_score = parseInt(document.getElementById('qPassScore').value) || 50;
-
         const questions = [];
         document.querySelectorAll('.question-box').forEach(box => {
             const qText = box.querySelector('.q-text').value;
@@ -184,8 +233,9 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
         orderIndex = count || 0;
     }
 
-    const payload = { title, type, video_url, content, course_id: courseId, passing_score }; // เพิ่ม passing_score ใน payload
+    const payload = { title, type, video_url, content, course_id: courseId, passing_score };
     if (!id) payload.order_index = orderIndex;
+    if (pdf_url) payload.pdf_url = pdf_url; // อัปเดตเฉพาะถ้ามีการอัปโหลดไฟล์ใหม่
 
     let error;
     if (id) {
@@ -199,6 +249,7 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     if (!error) {
         loadLessons();
         if (!id) resetForm();
+        alert('บันทึกเรียบร้อย');
     } else {
         alert('Error: ' + error.message);
     }
