@@ -9,12 +9,15 @@
     <link rel="stylesheet" href="css/style.css">
     <style>
         body { padding-top: 80px; }
+        
+        /* Video Container */
         .video-container {
             position: relative; padding-bottom: 56.25%; height: 0; background: #000;
             border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
+        /* Playlist (Right Side) */
         .playlist-box {
             background: white; border: 1px solid #e9ecef; border-radius: 12px;
             overflow: hidden; height: calc(100vh - 120px); display: flex; flex-direction: column;
@@ -24,6 +27,7 @@
         }
         .playlist-content { overflow-y: auto; flex-grow: 1; }
         
+        /* Lesson Item */
         .lesson-item {
             padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f8f9fa;
             transition: all 0.2s; display: flex; align-items: center;
@@ -31,6 +35,7 @@
         .lesson-item:hover { background-color: #f1f8ff; }
         .lesson-item.active { background-color: #e7f1ff; border-left: 4px solid #0d6efd; font-weight: 600; }
         
+        /* Checkbox Icon */
         .check-btn {
             width: 24px; height: 24px; border-radius: 50%; border: 2px solid #adb5bd;
             display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
@@ -39,11 +44,23 @@
         .check-btn:hover { border-color: #0d6efd; }
         .check-btn.completed { background-color: #198754; border-color: #198754; color: white; }
         
-        /* สไตล์ข้อสอบ */
-        .quiz-option { cursor: pointer; transition: 0.2s; }
+        /* Quiz Styles */
+        .quiz-option { cursor: pointer; transition: 0.2s; position: relative; }
         .quiz-option:hover { background-color: #f8f9fa; }
         .quiz-option input { cursor: pointer; }
-
+        
+        /* เฉลยข้อสอบ (Correct/Wrong) */
+        .quiz-option.correct {
+            background-color: #d1e7dd !important; 
+            border-color: #badbcc !important;
+            color: #0f5132;
+        }
+        .quiz-option.wrong {
+            background-color: #f8d7da !important; 
+            border-color: #f5c6cb !important;
+            color: #842029;
+        }
+        
         @media (max-width: 991px) { .playlist-box { height: auto; max-height: 500px; margin-top: 20px; } }
     </style>
 </head>
@@ -115,13 +132,19 @@
                         <div class="text-center mb-4">
                             <i class="bi bi-patch-question-fill text-primary display-4"></i>
                             <h3 class="fw-bold mt-3">แบบทดสอบท้ายบท</h3>
-                            <p class="text-muted">ตอบคำถามให้ถูกต้องเพื่อผ่านบทเรียนนี้</p>
+                            <p class="text-muted">ตอบคำถามให้ถูกต้องเพื่อผ่านบทเรียนนี้ (เกณฑ์ 50%)</p>
                         </div>
-                        <div id="quizBody">
-                            </div>
+                        
+                        <div id="quizBody"></div>
+
+                        <div id="quizResult" class="alert mt-4 text-center d-none" role="alert"></div>
+
                         <div class="mt-4 text-center">
-                            <button onclick="submitQuiz()" class="btn btn-primary px-5 rounded-pill fw-bold btn-lg shadow-sm">
+                            <button id="btnSubmitQuiz" onclick="submitQuiz()" class="btn btn-primary px-5 rounded-pill fw-bold btn-lg shadow-sm">
                                 <i class="bi bi-send-check"></i> ส่งคำตอบ
+                            </button>
+                            <button id="btnRetryQuiz" onclick="retryQuiz()" class="btn btn-outline-warning px-5 rounded-pill fw-bold btn-lg shadow-sm d-none">
+                                <i class="bi bi-arrow-counterclockwise"></i> ทำข้อสอบใหม่
                             </button>
                         </div>
                     </div>
@@ -168,6 +191,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="js/classroom.js"></script>
     <script type="module" src="js/user_auth.js"></script>
+    
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
