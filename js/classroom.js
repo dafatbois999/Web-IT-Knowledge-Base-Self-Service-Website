@@ -148,14 +148,11 @@ function loadLesson(index) {
             btnSubmit.classList.remove('d-none');
             btnRetry.classList.add('d-none');
             
-            // --- [ส่วนที่แก้ไข] ดึงคะแนนผ่านและอัปเดตข้อความ ---
             const passScore = lesson.passing_score || 50; 
             
-            // อัปเดตข้อความตรงหัวข้อ (ที่ขีดเส้นแดง)
             const quizSub = document.getElementById('quizSubtitle');
             if(quizSub) quizSub.innerText = `ตอบคำถามให้ถูกต้องเพื่อผ่านบทเรียนนี้ (เกณฑ์ ${passScore}%)`;
 
-            // อัปเดตข้อความตรงคำอธิบายล่าง
             contentEl.innerHTML = `<div class="alert alert-warning"><i class="bi bi-info-circle"></i> แบบทดสอบ: ต้องได้คะแนน ${passScore}% ขึ้นไปถึงจะผ่าน</div>`;
 
             if (completedLessonIds.has(lesson.id)) {
@@ -178,6 +175,7 @@ function loadLesson(index) {
     }
 }
 
+// --- [ปรับปรุง] ฟังก์ชันสร้าง Layout ข้อสอบ ---
 function renderQuiz(questions) {
     const container = document.getElementById('quizBody');
     container.innerHTML = '';
@@ -186,18 +184,31 @@ function renderQuiz(questions) {
     questions.forEach((q, index) => {
         let optionsHtml = '';
         q.options.forEach((opt, optIndex) => {
+            // ใช้ Layout ใหม่: Label ครอบ Input (ซ่อน) + วงกลมตัวเลข + ข้อความ
             optionsHtml += `
-                <div class="form-check p-3 border rounded mb-2 quiz-option" id="opt_${index}_${optIndex}">
-                    <input class="form-check-input" type="radio" name="q${index}" id="radio_${index}_${optIndex}" value="${optIndex}">
-                    <label class="form-check-label w-100" style="cursor:pointer;" for="radio_${index}_${optIndex}">${opt}</label>
-                </div>`;
+                <label class="quiz-option-card d-flex align-items-center p-3 mb-3 border rounded-3 w-100" id="opt_${index}_${optIndex}">
+                    <input class="d-none" type="radio" name="q${index}" value="${optIndex}">
+                    
+                    <div class="option-circle d-flex align-items-center justify-content-center rounded-circle border me-3 flex-shrink-0" 
+                         style="width: 40px; height: 40px; font-weight: bold; color: #6c757d; border-color: #dee2e6; transition:0.2s;">
+                        ${optIndex + 1}
+                    </div>
+                    
+                    <span class="option-text text-dark" style="font-size: 1rem;">${opt}</span>
+                </label>`;
         });
-        container.innerHTML += `<div class="mb-4"><h5 class="fw-bold mb-3">${index + 1}. ${q.q}</h5>${optionsHtml}</div>`;
+        container.innerHTML += `
+            <div class="mb-5">
+                <h5 class="fw-bold mb-3 text-dark">${index + 1}. ${q.q}</h5>
+                ${optionsHtml}
+            </div>`;
     });
 }
 
 function restoreQuizState(savedData) {
     if (!savedData || !savedData.answers) return;
+    
+    // ล็อกและแสดงผล
     const inputs = document.querySelectorAll('#quizBody input');
     inputs.forEach(inp => inp.disabled = true);
 
@@ -295,7 +306,7 @@ window.submitQuiz = async () => {
 };
 
 window.retryQuiz = () => {
-    document.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'wrong'));
+    document.querySelectorAll('.quiz-option-card').forEach(el => el.classList.remove('correct', 'wrong'));
     document.querySelectorAll('#quizBody input').forEach(inp => { inp.disabled = false; inp.checked = false; });
     document.getElementById('quizResult').classList.add('d-none');
     document.getElementById('btnSubmitQuiz').classList.remove('d-none');
