@@ -148,8 +148,14 @@ function loadLesson(index) {
             btnSubmit.classList.remove('d-none');
             btnRetry.classList.add('d-none');
             
-            // [ใหม่] แสดงเกณฑ์คะแนนที่ตั้งไว้
+            // --- [ส่วนที่แก้ไข] ดึงคะแนนผ่านและอัปเดตข้อความ ---
             const passScore = lesson.passing_score || 50; 
+            
+            // อัปเดตข้อความตรงหัวข้อ (ที่ขีดเส้นแดง)
+            const quizSub = document.getElementById('quizSubtitle');
+            if(quizSub) quizSub.innerText = `ตอบคำถามให้ถูกต้องเพื่อผ่านบทเรียนนี้ (เกณฑ์ ${passScore}%)`;
+
+            // อัปเดตข้อความตรงคำอธิบายล่าง
             contentEl.innerHTML = `<div class="alert alert-warning"><i class="bi bi-info-circle"></i> แบบทดสอบ: ต้องได้คะแนน ${passScore}% ขึ้นไปถึงจะผ่าน</div>`;
 
             if (completedLessonIds.has(lesson.id)) {
@@ -249,10 +255,9 @@ window.submitQuiz = async () => {
         else { const wrongBox = document.getElementById(`opt_${index}_${userAns}`); if(wrongBox) wrongBox.classList.add('wrong'); }
     });
 
-    // [ใหม่] คำนวณตามเกณฑ์ที่ตั้งไว้
     const percent = (score / total) * 100;
     const currentLesson = allLessons[currentLessonIndex];
-    const passScore = currentLesson.passing_score || 50; // ดึงเกณฑ์คะแนนมาใช้
+    const passScore = currentLesson.passing_score || 50; 
     const isPassed = percent >= passScore;
     
     const resultBox = document.getElementById('quizResult');
