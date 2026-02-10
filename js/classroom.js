@@ -18,67 +18,45 @@ async function initClassroom() {
         console.log("Start loading course ID:", courseId);
 
         // 1. ดึงชื่อคอร์ส
-        const { data: course, error: courseError } = await supabase
-            .from('courses')
-            .select('title')
-            .eq('id', courseId)
-            .single();
-        
+        const { data: course } = await supabase.from('courses').select('title').eq('id', courseId).single();
         if (course) {
-            safeSetText('courseHeader', course.title);
-            safeSetText('courseName', course.title);
+            // ใส่ชื่อคอร์สตรงเนื้อหา (ไม่ต้องใส่ใน Navbar แล้วตามที่คุณขอ)
+            const nameEl = document.getElementById('courseName');
+            if(nameEl) nameEl.innerText = course.title;
             document.title = `${course.title} - ห้องเรียนออนไลน์`;
         }
 
         // 2. ดึงบทเรียน
-        const { data: lessons, error: lessonError } = await supabase
+        const { data: lessons, error } = await supabase
             .from('lessons')
             .select('*')
             .eq('course_id', courseId)
-            .order('order_index', { ascending: true })
+            .order('order_index', { ascending: true }) // ถ้า SQL ยังไม่รัน บรรทัดนี้จะ Error 400
             .order('created_at', { ascending: true });
 
-        if (lessonError) throw lessonError;
+        if (error) throw error;
 
-        // 3. ตรวจสอบว่ามีบทเรียนไหม
+        // 3. แสดงผล Playlist
         const playlistBox = document.getElementById('playlist');
         
         if (!lessons || lessons.length === 0) {
-            console.warn("No lessons found. Check Database RLS policies.");
-            if (playlistBox) playlistBox.innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหาในคอร์สนี้</div>';
-            
-            safeSetText('lessonTitle', "ยังไม่มีบทเรียน");
-            safeSetText('lessonContent', "คุณครูยังไม่ได้เพิ่มเนื้อหาในคอร์สนี้ หรือคุณอาจไม่มีสิทธิ์เข้าถึง");
-            
-            // ซ่อนวิดีโอ โชว์ว่าง
-            const noVid = document.getElementById('noVideoPlaceholder');
-            if(noVid) {
-                noVid.style.display = 'flex';
-                noVid.innerHTML = '<h4 class="text-muted">ไม่พบข้อมูลบทเรียน</h4>';
-            }
+            if(playlistBox) playlistBox.innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหาในคอร์สนี้</div>';
+            document.getElementById('lessonTitle').innerText = "ยังไม่มีบทเรียน";
+            document.getElementById('lessonContent').innerText = "คุณครูยังไม่ได้เพิ่มเนื้อหา";
+            document.getElementById('noVideoPlaceholder').style.display = 'flex';
             return;
         }
 
-        console.log(`Loaded ${lessons.length} lessons.`);
         allLessons = lessons;
         renderPlaylist();
-        
-        // เล่นบทแรก
-        loadLesson(0);
+        loadLesson(0); // เล่นบทแรกอัตโนมัติ
 
     } catch (err) {
-        console.error("Critical Error:", err);
-        alert('เกิดข้อผิดพลาด: ' + err.message);
-    }
-}
-
-// ฟังก์ชันช่วยใส่ข้อความ (ป้องกัน Error ถ้าหา Element ไม่เจอ)
-function safeSetText(elementId, text) {
-    const el = document.getElementById(elementId);
-    if (el) {
-        el.innerText = text;
-    } else {
-        console.warn(`Element ID '${elementId}' not found in HTML.`);
+        console.error("Error:", err);
+        // ถ้า Error 400 แสดงว่ายังไม่ได้รัน SQL เพิ่มคอลัมน์ order_index
+        if (err.code === '42703' || err.code === 'PGRST100' || err.message.includes('order_index')) {
+            alert('ระบบขัดข้อง: กรุณาแจ้ง Admin ให้รันคำสั่ง SQL เพิ่มคอลัมน์ order_index');
+        }
     }
 }
 
@@ -89,7 +67,8 @@ function renderPlaylist() {
 
     allLessons.forEach((l, index) => {
         const isActive = index === currentLessonIndex ? 'active' : '';
-        const icon = l.video_url ? '<i class="bi bi-play-circle-fill lesson-icon me-3"></i>' : '<i class="bi bi-file-text-fill lesson-icon me-3"></i>';
+        // ไอคอนแยกประเภท (วิดีโอ vs บทความ)
+        const icon = l.video_url ? '<i class="bi bi-play-circle-fill lesson-icon"></i>' : '<i class="bi bi-file-text-fill lesson-icon"></i>';
 
         list.innerHTML += `
             <div class="lesson-item ${isActive}" onclick="changeLesson(${index})">
@@ -97,9 +76,6 @@ function renderPlaylist() {
                     <span class="small text-muted me-3 fw-bold">${index + 1}.</span>
                     <div class="flex-grow-1">
                         <div class="fw-bold" style="font-size: 0.95rem;">${l.title}</div>
-                        <small class="opacity-75" style="font-size: 0.8rem;">
-                            ${l.video_url ? 'วิดีโอ' : 'บทความ'}
-                        </small>
                     </div>
                     ${icon}
                 </div>
@@ -108,7 +84,7 @@ function renderPlaylist() {
     });
 }
 
-// ทำให้ HTML เรียกใช้ได้
+// Global function
 window.changeLesson = (index) => {
     currentLessonIndex = index;
     renderPlaylist();
@@ -119,9 +95,11 @@ function loadLesson(index) {
     const lesson = allLessons[index];
     if (!lesson) return;
 
-    safeSetText('lessonTitle', lesson.title);
-    safeSetText('lessonContent', lesson.content || "ไม่มีรายละเอียดเนื้อหา");
+    // ใส่เนื้อหา
+    document.getElementById('lessonTitle').innerText = lesson.title;
+    document.getElementById('lessonContent').innerText = lesson.content || "ไม่มีรายละเอียดเนื้อหา";
 
+    // จัดการวิดีโอ
     const videoBox = document.getElementById('videoContainer');
     const noVideoBox = document.getElementById('noVideoPlaceholder');
     const iframe = document.getElementById('mainVideo');
@@ -134,10 +112,10 @@ function loadLesson(index) {
             else if (lesson.video_url.includes('embed/')) videoId = lesson.video_url.split('embed/')[1].split('?')[0];
         } catch (e) { console.error("URL Error", e); }
 
-        if (videoId && videoBox && iframe) {
+        if (videoId) {
             iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
             videoBox.classList.remove('d-none');
-            if(noVideoBox) noVideoBox.style.display = 'none';
+            noVideoBox.style.display = 'none';
         } else {
             showNoVideo();
         }
