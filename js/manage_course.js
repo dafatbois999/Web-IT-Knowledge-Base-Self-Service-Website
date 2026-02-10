@@ -3,99 +3,93 @@ import { supabase } from './supabase-config.js';
 const urlParams = new URLSearchParams(window.location.search);
 const courseId = urlParams.get('id');
 
-// ตรวจสอบว่ามี ID ไหม
+// เช็ค ID คอร์ส
 if (!courseId) {
-    alert('ไม่พบข้อมูลคอร์ส');
+    alert('ไม่พบ ID คอร์ส (URL ผิดปกติ)');
     window.location.href = 'teacher.html';
+} else {
+    console.log("Current Course ID:", courseId);
 }
 
-// ==========================================
-// 1. เริ่มต้นทำงาน (Init)
-// ==========================================
+// 1. Init
 loadCourseInfo();
 loadLessons();
 
-// โหลดข้อมูลหัวข้อคอร์ส
+// โหลดชื่อคอร์ส
 async function loadCourseInfo() {
     const { data, error } = await supabase.from('courses').select('title').eq('id', courseId).single();
-    if (data) {
-        document.getElementById('courseTitle').innerText = data.title;
-    }
+    if (data) document.getElementById('courseTitle').innerText = data.title;
 }
 
-// โหลดรายการบทเรียน (List)
+// โหลดบทเรียน
 async function loadLessons() {
+    console.log("Loading lessons...");
     const listContainer = document.getElementById('lessonList');
-    listContainer.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
+    listContainer.innerHTML = '<div class="text-center py-3">Loading...</div>';
 
     const { data: lessons, error } = await supabase
         .from('lessons')
         .select('*')
         .eq('course_id', courseId)
-        .order('order_index', { ascending: true }) // เรียงตามลำดับ (เดี๋ยวทำระบบเรียงทีหลังได้)
-        .order('created_at', { ascending: true });
+        .order('order_index', { ascending: true });
+
+    if (error) {
+        console.error("Load Error:", error);
+        listContainer.innerHTML = `<div class="text-danger p-3">Error: ${error.message}</div>`;
+        return;
+    }
 
     listContainer.innerHTML = '';
-
     if (!lessons || lessons.length === 0) {
-        listContainer.innerHTML = '<div class="text-center py-4 text-muted small">ยังไม่มีบทเรียน</div>';
+        listContainer.innerHTML = '<div class="text-center py-4 text-muted">ยังไม่มีบทเรียน</div>';
         return;
     }
 
     lessons.forEach((l, index) => {
         listContainer.innerHTML += `
             <button onclick="editLesson('${l.id}')" class="list-group-item list-group-item-action py-3 border-bottom">
-                <div class="d-flex w-100 justify-content-between align-items-center">
-                    <span class="fw-bold text-dark">
-                        <span class="badge bg-light text-dark border me-2">${index + 1}</span> ${l.title}
-                    </span>
-                    <i class="bi bi-chevron-right text-muted small"></i>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><span class="badge bg-light text-dark border me-2">${index + 1}</span> ${l.title}</span>
+                    <i class="bi bi-pencil-square text-muted"></i>
                 </div>
             </button>
         `;
     });
 }
 
-// ==========================================
-// 2. จัดการฟอร์ม (Add / Edit Mode)
-// ==========================================
-
-// โหมดเพิ่มใหม่ (เคลียร์ฟอร์ม)
+// 2. Form Functions
 window.resetForm = () => {
     document.getElementById('lessonForm').reset();
-    document.getElementById('lessonId').value = ''; // เคลียร์ ID
+    document.getElementById('lessonId').value = '';
     document.getElementById('formTitle').innerText = 'เพิ่มบทเรียนใหม่';
-    document.getElementById('btnDelete').classList.add('d-none'); // ซ่อนปุ่มลบ
-    document.getElementById('lTitle').focus();
+    document.getElementById('btnDelete').classList.add('d-none');
 }
 
-// โหมดแก้ไข (ดึงข้อมูลมาใส่ฟอร์ม)
 window.editLesson = async (id) => {
-    // 1. ดึงข้อมูล
     const { data } = await supabase.from('lessons').select('*').eq('id', id).single();
-    
     if (data) {
-        // 2. ใส่ค่าลงฟอร์ม
         document.getElementById('lessonId').value = data.id;
         document.getElementById('lTitle').value = data.title;
         document.getElementById('lVideo').value = data.video_url || '';
         document.getElementById('lContent').value = data.content || '';
-
-        // 3. ปรับ UI
+        
         document.getElementById('formTitle').innerText = 'แก้ไขบทเรียน';
-        document.getElementById('btnDelete').classList.remove('d-none'); // โชว์ปุ่มลบ
+        document.getElementById('btnDelete').classList.remove('d-none');
     }
 }
 
-// ==========================================
-// 3. บันทึกข้อมูล (Save)
-// ==========================================
+// 3. Save Logic
 document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log("Saving...");
+    
+    // UI Loading
     const btn = e.target.querySelector('button[type="submit"]');
     const oldText = btn.innerText;
-    btn.innerText = 'กำลังบันทึก...'; btn.disabled = true;
+    btn.innerText = 'กำลังบันทึก...';
+    btn.disabled = true;
 
+    // Get Values
     const id = document.getElementById('lessonId').value;
     const title = document.getElementById('lTitle').value;
     const video = document.getElementById('lVideo').value;
@@ -104,50 +98,51 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     let error;
 
     if (id) {
-        // --- Update ---
-        const { error: updateError } = await supabase
+        // Update
+        const { error: upErr } = await supabase
             .from('lessons')
             .update({ title, video_url: video, content })
             .eq('id', id);
-        error = updateError;
+        error = upErr;
     } else {
-        // --- Insert ---
-        const { error: insertError } = await supabase
+        // Insert
+        const { error: inErr } = await supabase
             .from('lessons')
             .insert({ 
                 course_id: courseId, 
-                title, 
+                title: title, 
                 video_url: video, 
-                content 
+                content: content 
             });
-        error = insertError;
+        error = inErr;
     }
 
-    if (!error) {
-        // alert('บันทึกเรียบร้อย');
-        loadLessons(); // รีโหลดลิสต์ซ้ายมือ
-        if (!id) resetForm(); // ถ้าเพิ่มใหม่ ให้เคลียร์ฟอร์มรอเพิ่มต่อ
+    if (error) {
+        console.error("Save Error:", error);
+        alert('บันทึกไม่สำเร็จ: ' + error.message);
     } else {
-        alert('เกิดข้อผิดพลาด: ' + error.message);
+        console.log("Saved Success");
+        loadLessons(); // รีโหลดลิสต์
+        if(!id) resetForm(); // ถ้าเพิ่มใหม่ ให้เคลียร์ฟอร์ม
     }
 
-    btn.innerHTML = '<i class="bi bi-save"></i> บันทึกข้อมูล'; btn.disabled = false;
+    // Restore Button
+    btn.innerHTML = '<i class="bi bi-save"></i> บันทึกข้อมูล';
+    btn.disabled = false;
 });
 
-// ==========================================
-// 4. ลบบทเรียน (Delete)
-// ==========================================
+// 4. Delete Logic
 window.deleteLesson = async () => {
     const id = document.getElementById('lessonId').value;
-    if (!id) return;
-
-    if (confirm('ยืนยันที่จะลบบทเรียนนี้?')) {
+    if(!id) return;
+    
+    if(confirm('ลบนะ?')) {
         const { error } = await supabase.from('lessons').delete().eq('id', id);
-        if (!error) {
+        if(!error) {
             resetForm();
             loadLessons();
         } else {
-            alert('ลบไม่สำเร็จ: ' + error.message);
+            alert(error.message);
         }
     }
 }
