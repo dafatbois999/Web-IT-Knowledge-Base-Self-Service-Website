@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/style.css">
     <style>
         /* CSS เฉพาะหน้าห้องเรียน */
-        body { padding-top: 80px; background-color: #f8f9fa; }
+        body { padding-top: 80px; }
         
         .video-container {
             position: relative;
@@ -28,15 +28,15 @@
             background: white;
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            height: calc(100vh - 120px); /* เต็มจอพอดี */
+            border: 1px solid #eee;
+            height: calc(100vh - 120px);
             display: flex;
             flex-direction: column;
         }
         
         .playlist-header {
             padding: 15px 20px;
-            background: #fff;
+            background: #f8f9fa;
             border-bottom: 1px solid #eee;
             font-weight: bold;
             color: #0d6efd;
@@ -64,7 +64,14 @@
         .lesson-icon { font-size: 1.2rem; color: #6c757d; }
         .lesson-item.active .lesson-icon { color: #0d6efd; }
 
-        /* Responsive: จอมือถือให้ Playlist อยู่ล่าง */
+        /* Dark Mode Support for Playlist */
+        body.dark-mode .playlist-box { background-color: #1e1e1e; border-color: #333; }
+        body.dark-mode .playlist-header { background-color: #2d2d2d; border-color: #333; }
+        body.dark-mode .lesson-item { border-color: #333; color: #e0e0e0; }
+        body.dark-mode .lesson-item:hover { background-color: #333; }
+        body.dark-mode .lesson-item.active { background-color: #0d6efd; color: white; }
+        body.dark-mode .lesson-item.active .lesson-icon { color: white; }
+
         @media (max-width: 991px) {
             .playlist-box { height: auto; max-height: 500px; }
         }
@@ -105,7 +112,8 @@
     </div>
 
     <nav class="navbar navbar-expand-lg fixed-top" id="mainNav">
-        <div class="container-fluid px-4"> <a class="navbar-brand fw-bold text-primary" href="index.html" style="font-size: 1.4rem;">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold text-primary" href="index.html" style="font-size: 1.4rem;">
                 <i class="bi bi-chevron-left text-dark me-2" style="font-size: 1rem;"></i> IT Knowledge Base
             </a>
             
@@ -183,7 +191,6 @@
     <script type="module" src="js/user_auth.js"></script>
 
     <script>
-        // Dark Mode Logic (เหมือนหน้าอื่น)
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
             document.getElementById('themeBtn').querySelector('i').className = 'bi bi-sun-fill text-warning';
