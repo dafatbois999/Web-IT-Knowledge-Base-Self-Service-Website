@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html"><i class="bi bi-mortarboard-fill"></i> Teacher Space</a>
+            <div class="d-flex align-items-center gap-3">
+                <span id="teacherName" class="text-white fw-bold">...</span>
+                <button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">ออกจากระบบ</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5 mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark">จัดการคอร์สเรียน</h2>
+                <p class="text-muted">สร้างและแก้ไขเนื้อหาบทเรียนของคุณได้ที่นี่</p>
+            </div>
+            <button onclick="openCreateModal()" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-lg"></i> สร้างคอร์สใหม่
+            </button>
+        </div>
+
+        <div class="row g-4" id="courseGrid">
+            <div class="col-12 text-center py-5 text-muted">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2">กำลังโหลดข้อมูล...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="createModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-book-half"></i> สร้างคอร์สใหม่</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="createForm">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">ชื่อคอร์ส</label>
+                            <input id="cTitle" class="form-control" placeholder="เช่น การเขียนโปรแกรมเบื้องต้น" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">รายละเอียดโดยย่อ</label>
+                            <textarea id="cDesc" class="form-control" rows="3" placeholder="อธิบายเกี่ยวกับคอร์สนี้..."></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold">รูปภาพหน้าปก (URL)</label>
+                            <input id="cImg" class="form-control" placeholder="https://...">
+                            <div class="form-text small">แนะนำรูปขนาด 16:9 เพื่อความสวยงาม</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-pill">บันทึกและสร้าง</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/teacher.js"></script>
+</body>
+</html>
