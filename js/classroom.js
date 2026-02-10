@@ -2,10 +2,10 @@ import { supabase } from './supabase-config.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const courseId = urlParams.get('id');
-const userId = localStorage.getItem('user_id'); // ดึง ID คนเรียน
+const userId = localStorage.getItem('user_id');
 
 let allLessons = [];
-let completedLessonIds = new Set(); // เก็บ ID บทที่เรียนจบแล้ว
+let completedLessonIds = new Set();
 let currentLessonIndex = 0;
 
 if (!courseId) {
@@ -36,7 +36,7 @@ async function initClassroom() {
         if (error) throw error;
         allLessons = lessons || [];
 
-        // 3. ดึง Progress (ถ้าล็อกอินอยู่)
+        // 3. ดึง Progress
         if (userId) {
             const { data: progress } = await supabase
                 .from('student_progress')
@@ -49,7 +49,6 @@ async function initClassroom() {
             }
         }
 
-        // 4. แสดงผล
         renderPlaylist();
         updateProgressBar();
         
@@ -64,7 +63,6 @@ async function initClassroom() {
     }
 }
 
-// อัปเดต UI Playlist
 function renderPlaylist() {
     const list = document.getElementById('playlist');
     if (!list) return;
@@ -80,7 +78,6 @@ function renderPlaylist() {
                 <div class="check-btn ${isCompleted}" onclick="toggleComplete(event, ${l.id})">
                     ${checkIcon}
                 </div>
-
                 <div class="d-flex align-items-center flex-grow-1" onclick="changeLesson(${index})">
                     <span class="small text-muted me-3 fw-bold">${index + 1}.</span>
                     <div class="flex-grow-1">
@@ -93,19 +90,16 @@ function renderPlaylist() {
     });
 }
 
-// กดติ๊กถูก / เอาออก
 window.toggleComplete = async (e, lessonId) => {
-    e.stopPropagation(); // ไม่ให้ไป trigger การเปลี่ยนบทเรียน
+    e.stopPropagation();
     if (!userId) return alert('กรุณาเข้าสู่ระบบเพื่อบันทึกความคืบหน้า');
 
     const btn = e.currentTarget;
     
     if (completedLessonIds.has(lessonId)) {
-        // --- เอาออก (Uncheck) ---
         completedLessonIds.delete(lessonId);
         await supabase.from('student_progress').delete().eq('user_id', userId).eq('lesson_id', lessonId);
     } else {
-        // --- ติ๊กถูก (Check) ---
         completedLessonIds.add(lessonId);
         await supabase.from('student_progress').insert({
             user_id: userId,
@@ -114,24 +108,26 @@ window.toggleComplete = async (e, lessonId) => {
         });
     }
 
-    renderPlaylist(); // รีเฟรชไอคอน
-    updateProgressBar(); // คำนวณ % ใหม่
+    renderPlaylist();
+    updateProgressBar();
 };
 
-// คำนวณเปอร์เซ็นต์
 function updateProgressBar() {
     if (allLessons.length === 0) return;
     const percent = Math.round((completedLessonIds.size / allLessons.length) * 100);
     
-    document.getElementById('progressBar').style.width = `${percent}%`;
-    document.getElementById('progressPercent').innerText = `${percent}%`;
-    
-    // เปลี่ยนสีเมื่อครบ 100%
-    if (percent === 100) {
-        document.getElementById('progressPercent').classList.replace('bg-success', 'bg-warning');
-        document.getElementById('progressPercent').innerText = '🎉 100%';
-    } else {
-        document.getElementById('progressPercent').classList.replace('bg-warning', 'bg-success');
+    const bar = document.getElementById('progressBar');
+    const txt = document.getElementById('progressPercent');
+
+    if(bar) bar.style.width = `${percent}%`;
+    if(txt) {
+        txt.innerText = `${percent}%`;
+        if (percent === 100) {
+            txt.classList.replace('bg-success', 'bg-warning');
+            txt.innerText = '🎉 100%';
+        } else {
+            txt.classList.replace('bg-warning', 'bg-success');
+        }
     }
 }
 
@@ -152,7 +148,6 @@ function loadLesson(index) {
     if(contentEl) contentEl.innerText = lesson.content || "ไม่มีรายละเอียดเนื้อหา";
 
     const videoBox = document.getElementById('videoContainer');
-    const noVideoBox = document.getElementById('noVideoPlaceholder');
     const iframe = document.getElementById('mainVideo');
 
     if (lesson.video_url && lesson.video_url.length > 5) {
@@ -166,13 +161,15 @@ function loadLesson(index) {
         if (videoId && iframe) {
             iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
             if(videoBox) videoBox.classList.remove('d-none');
-            if(noVideoBox) noVideoBox.style.display = 'none';
-        } else { showNoVideo(); }
-    } else { showNoVideo(); }
+        } else {
+            hideVideo();
+        }
+    } else {
+        hideVideo();
+    }
 
-    function showNoVideo() {
+    function hideVideo() {
         if(iframe) iframe.src = "";
         if(videoBox) videoBox.classList.add('d-none');
-        if(noVideoBox) noVideoBox.style.display = 'flex';
     }
 }
