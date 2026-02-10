@@ -27,6 +27,7 @@
 
     <div class="container py-5 mt-5">
         <div class="row g-4">
+            
             <div class="col-md-4">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white py-3">
@@ -42,9 +43,14 @@
 
             <div class="col-md-8">
                 <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white py-3">
+                    
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold text-dark" id="formTitle">เพิ่มเนื้อหาใหม่</h5>
+                        <button onclick="resetForm()" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                            <i class="bi bi-plus-lg"></i> เพิ่มใหม่
+                        </button>
                     </div>
+
                     <div class="card-body p-4">
                         <ul class="nav nav-pills mb-4 bg-light p-2 rounded">
                             <li class="nav-item w-50 text-center">
