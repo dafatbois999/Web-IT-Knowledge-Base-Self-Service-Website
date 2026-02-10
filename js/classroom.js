@@ -20,19 +20,19 @@ async function initClassroom() {
         // 1. ดึงชื่อคอร์ส
         const { data: course } = await supabase.from('courses').select('title').eq('id', courseId).single();
         if (course) {
-            // ใส่ชื่อคอร์สตรงเนื้อหา (ไม่ต้องใส่ใน Navbar แล้วตามที่คุณขอ)
+            // ใส่ชื่อคอร์สตรงเนื้อหา
             const nameEl = document.getElementById('courseName');
             if(nameEl) nameEl.innerText = course.title;
             document.title = `${course.title} - ห้องเรียนออนไลน์`;
         }
 
-        // 2. ดึงบทเรียน
+        // 2. ดึงบทเรียน (ปรับใหม่: เรียงตาม ID แทน created_at เพื่อแก้ปัญหา Database ไม่ตรง)
         const { data: lessons, error } = await supabase
             .from('lessons')
             .select('*')
             .eq('course_id', courseId)
-            .order('order_index', { ascending: true }) // ถ้า SQL ยังไม่รัน บรรทัดนี้จะ Error 400
-            .order('created_at', { ascending: true });
+            .order('order_index', { ascending: true }) 
+            .order('id', { ascending: true }); // ใช้ ID แทน created_at ชั่วคราว
 
         if (error) throw error;
 
@@ -41,9 +41,15 @@ async function initClassroom() {
         
         if (!lessons || lessons.length === 0) {
             if(playlistBox) playlistBox.innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหาในคอร์สนี้</div>';
-            document.getElementById('lessonTitle').innerText = "ยังไม่มีบทเรียน";
-            document.getElementById('lessonContent').innerText = "คุณครูยังไม่ได้เพิ่มเนื้อหา";
-            document.getElementById('noVideoPlaceholder').style.display = 'flex';
+            
+            const titleEl = document.getElementById('lessonTitle');
+            if(titleEl) titleEl.innerText = "ยังไม่มีบทเรียน";
+            
+            const contentEl = document.getElementById('lessonContent');
+            if(contentEl) contentEl.innerText = "คุณครูยังไม่ได้เพิ่มเนื้อหา";
+            
+            const noVid = document.getElementById('noVideoPlaceholder');
+            if(noVid) noVid.style.display = 'flex';
             return;
         }
 
@@ -52,10 +58,10 @@ async function initClassroom() {
         loadLesson(0); // เล่นบทแรกอัตโนมัติ
 
     } catch (err) {
-        console.error("Error:", err);
-        // ถ้า Error 400 แสดงว่ายังไม่ได้รัน SQL เพิ่มคอลัมน์ order_index
-        if (err.code === '42703' || err.code === 'PGRST100' || err.message.includes('order_index')) {
-            alert('ระบบขัดข้อง: กรุณาแจ้ง Admin ให้รันคำสั่ง SQL เพิ่มคอลัมน์ order_index');
+        console.error("Error Detail:", err);
+        // แจ้งเตือนถ้าเป็น Error จาก SQL
+        if (err.code === '42703') {
+            alert('Database Error: คอลัมน์ไม่ครบ กรุณารัน SQL เพิ่มคอลัมน์ (ดูใน Console)');
         }
     }
 }
@@ -67,7 +73,6 @@ function renderPlaylist() {
 
     allLessons.forEach((l, index) => {
         const isActive = index === currentLessonIndex ? 'active' : '';
-        // ไอคอนแยกประเภท (วิดีโอ vs บทความ)
         const icon = l.video_url ? '<i class="bi bi-play-circle-fill lesson-icon"></i>' : '<i class="bi bi-file-text-fill lesson-icon"></i>';
 
         list.innerHTML += `
@@ -84,7 +89,6 @@ function renderPlaylist() {
     });
 }
 
-// Global function
 window.changeLesson = (index) => {
     currentLessonIndex = index;
     renderPlaylist();
@@ -96,8 +100,11 @@ function loadLesson(index) {
     if (!lesson) return;
 
     // ใส่เนื้อหา
-    document.getElementById('lessonTitle').innerText = lesson.title;
-    document.getElementById('lessonContent').innerText = lesson.content || "ไม่มีรายละเอียดเนื้อหา";
+    const titleEl = document.getElementById('lessonTitle');
+    if(titleEl) titleEl.innerText = lesson.title;
+    
+    const contentEl = document.getElementById('lessonContent');
+    if(contentEl) contentEl.innerText = lesson.content || "ไม่มีรายละเอียดเนื้อหา";
 
     // จัดการวิดีโอ
     const videoBox = document.getElementById('videoContainer');
@@ -112,10 +119,10 @@ function loadLesson(index) {
             else if (lesson.video_url.includes('embed/')) videoId = lesson.video_url.split('embed/')[1].split('?')[0];
         } catch (e) { console.error("URL Error", e); }
 
-        if (videoId) {
+        if (videoId && iframe) {
             iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            videoBox.classList.remove('d-none');
-            noVideoBox.style.display = 'none';
+            if(videoBox) videoBox.classList.remove('d-none');
+            if(noVideoBox) noVideoBox.style.display = 'none';
         } else {
             showNoVideo();
         }
