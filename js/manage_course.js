@@ -8,17 +8,14 @@ if (!courseId) {
     window.location.href = 'teacher.html';
 }
 
-// 1. Init
 loadCourseInfo();
 loadLessons();
 
-// โหลดชื่อคอร์ส
 async function loadCourseInfo() {
     const { data } = await supabase.from('courses').select('title').eq('id', courseId).single();
     if (data) document.getElementById('courseTitle').innerText = data.title;
 }
 
-// โหลดรายการ (ปรับปรุงให้รองรับ Drag & Drop)
 async function loadLessons() {
     const list = document.getElementById('lessonList');
     list.innerHTML = '<div class="text-center py-3">Loading...</div>';
@@ -41,7 +38,6 @@ async function loadLessons() {
     lessons.forEach((l, index) => {
         let icon = l.type === 'quiz' ? '<i class="bi bi-patch-question-fill text-warning"></i>' : '<i class="bi bi-play-btn-fill text-primary"></i>';
         
-        // [สำคัญ] ใส่ data-id เพื่อใช้ตอนบันทึกลำดับ
         list.innerHTML += `
             <div class="list-group-item list-group-item-action py-3 border-bottom d-flex justify-content-between align-items-center" data-id="${l.id}" onclick="editLesson('${l.id}')">
                 <span>
@@ -52,45 +48,28 @@ async function loadLessons() {
             </div>
         `;
     });
-
-    // เริ่มต้นระบบลากวาง (SortableJS)
     initSortable();
 }
 
-// ฟังก์ชันลากวาง
 function initSortable() {
     const el = document.getElementById('lessonList');
     new Sortable(el, {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        handle: '.list-group-item', // ลากได้ทั้งแถบ
-        onEnd: async function () {
-            // เมื่อวางเสร็จ ให้บันทึกลำดับใหม่
-            await saveOrder();
-        }
+        animation: 150, ghostClass: 'sortable-ghost', handle: '.list-group-item',
+        onEnd: async function () { await saveOrder(); }
     });
 }
 
-// บันทึกลำดับลง Database
 async function saveOrder() {
     const items = document.querySelectorAll('#lessonList .list-group-item');
     const updates = [];
-
     items.forEach((item, index) => {
         const id = item.getAttribute('data-id');
-        // เตรียมข้อมูลที่จะอัปเดต (id และ order_index ใหม่)
         updates.push({ id: parseInt(id), order_index: index });
     });
-
-    // อัปเดตทีละตัว (Supabase Upsert แบบ Bulk จะซับซ้อนกว่านี้ ใช้วิธีนี้ง่ายสุดสำหรับตอนนี้)
     for (const update of updates) {
         await supabase.from('lessons').update({ order_index: update.order_index }).eq('id', update.id);
     }
-    
-    // console.log('Order updated!'); // เช็คใน Console ได้
 }
-
-// --- UI Management ---
 
 window.switchType = (type) => {
     document.getElementById('lessonType').value = type;
@@ -106,6 +85,7 @@ window.resetForm = () => {
     document.getElementById('formTitle').innerText = 'เพิ่มเนื้อหาใหม่';
     document.getElementById('btnDelete').classList.add('d-none');
     document.getElementById('questionContainer').innerHTML = ''; 
+    document.getElementById('qPassScore').value = 50; // Reset เป็น 50
     switchType('lesson');
 };
 
@@ -136,7 +116,6 @@ window.addQuestionUI = (data = null) => {
     container.insertAdjacentHTML('beforeend', html);
 };
 
-// --- Edit Mode ---
 window.editLesson = async (id) => {
     const { data } = await supabase.from('lessons').select('*').eq('id', id).single();
     if (data) {
@@ -147,6 +126,9 @@ window.editLesson = async (id) => {
 
         if (data.type === 'quiz') {
             switchType('quiz');
+            // [ใหม่] โหลดเกณฑ์คะแนน
+            document.getElementById('qPassScore').value = data.passing_score || 50;
+            
             const questions = JSON.parse(data.content || '[]');
             const container = document.getElementById('questionContainer');
             container.innerHTML = '';
@@ -159,7 +141,6 @@ window.editLesson = async (id) => {
     }
 };
 
-// --- Save Logic ---
 document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
@@ -171,11 +152,15 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     
     let content = '';
     let video_url = null;
+    let passing_score = 50; // Default
 
     if (type === 'lesson') {
         video_url = document.getElementById('lVideo').value;
         content = document.getElementById('lContent').value;
     } else {
+        // [ใหม่] รับค่า Passing Score
+        passing_score = parseInt(document.getElementById('qPassScore').value) || 50;
+
         const questions = [];
         document.querySelectorAll('.question-box').forEach(box => {
             const qText = box.querySelector('.q-text').value;
@@ -193,15 +178,14 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
         content = JSON.stringify(questions);
     }
 
-    // กำหนด order_index ให้ต่อท้ายสุด (เฉพาะตอนสร้างใหม่)
     let orderIndex = 0;
     if (!id) {
         const { count } = await supabase.from('lessons').select('*', { count: 'exact', head: true }).eq('course_id', courseId);
         orderIndex = count || 0;
     }
 
-    const payload = { title, type, video_url, content, course_id: courseId };
-    if (!id) payload.order_index = orderIndex; // ใส่ลำดับต่อท้าย
+    const payload = { title, type, video_url, content, course_id: courseId, passing_score }; // เพิ่ม passing_score ใน payload
+    if (!id) payload.order_index = orderIndex;
 
     let error;
     if (id) {
@@ -215,7 +199,6 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     if (!error) {
         loadLessons();
         if (!id) resetForm();
-        // alert('บันทึกเรียบร้อย');
     } else {
         alert('Error: ' + error.message);
     }
@@ -223,7 +206,6 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     btn.disabled = false; btn.innerHTML = '<i class="bi bi-save"></i> บันทึกข้อมูล';
 });
 
-// Delete
 window.deleteLesson = async () => {
     const id = document.getElementById('lessonId').value;
     if(id && confirm('ยืนยันลบ?')) {
