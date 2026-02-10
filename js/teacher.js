@@ -88,7 +88,7 @@ async function loadMyCourses() {
 }
 
 // ===========================================
-// 3. สร้างคอร์สใหม่
+// 3. สร้างคอร์สใหม่ (อัปโหลดรูป)
 // ===========================================
 window.openCreateModal = () => {
     document.getElementById('createForm').reset();
@@ -97,23 +97,52 @@ window.openCreateModal = () => {
 
 document.getElementById('createForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const title = document.getElementById('cTitle').value;
-    const desc = document.getElementById('cDesc').value;
-    const img = document.getElementById('cImg').value;
+    
+    // เปลี่ยนปุ่มเป็น Loading
+    const btn = e.target.querySelector('button');
+    const oldText = btn.innerText;
+    btn.innerText = "กำลังบันทึก...";
+    btn.disabled = true;
 
-    const { error } = await supabase.from('courses').insert({
-        title: title,
-        description: desc,
-        thumbnail_url: img,
-        teacher_id: currentTeacherId
-    });
+    try {
+        const title = document.getElementById('cTitle').value;
+        const desc = document.getElementById('cDesc').value;
+        const fileInput = document.getElementById('cImgFile');
+        const file = fileInput.files[0];
+        let imgUrl = null;
 
-    if (!error) {
+        // 1. อัปโหลดรูป (ถ้ามี)
+        if (file) {
+            const fileName = `course_${Date.now()}_${file.name}`;
+            const { error: uploadError } = await supabase.storage.from('images').upload(fileName, file);
+            
+            if (uploadError) throw uploadError;
+
+            // ดึง URL รูป
+            const { data } = supabase.storage.from('images').getPublicUrl(fileName);
+            imgUrl = data.publicUrl;
+        }
+
+        // 2. บันทึกข้อมูลคอร์ส
+        const { error } = await supabase.from('courses').insert({
+            title: title,
+            description: desc,
+            thumbnail_url: imgUrl,
+            teacher_id: currentTeacherId
+        });
+
+        if (error) throw error;
+
         alert('สร้างคอร์สสำเร็จ! 🎉');
         createModal.hide();
         loadMyCourses();
-    } else {
-        alert('เกิดข้อผิดพลาด: ' + error.message);
+
+    } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+        // คืนค่าปุ่ม
+        btn.innerText = oldText;
+        btn.disabled = false;
     }
 });
 
