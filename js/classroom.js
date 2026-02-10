@@ -19,13 +19,14 @@ initClassroom();
 
 async function initClassroom() {
     try {
+        // 1. ดึงชื่อคอร์ส
         const { data: course } = await supabase.from('courses').select('title').eq('id', courseId).single();
         if (course) {
             document.getElementById('courseName').innerText = course.title;
             document.title = `${course.title} - ห้องเรียนออนไลน์`;
         }
 
-        // ดึงข้อมูล lessons รวมถึง pdf_url
+        // 2. ดึงบทเรียน (รวมถึง pdf_url ที่เพิ่มมาใหม่)
         const { data: lessons, error } = await supabase
             .from('lessons')
             .select('*')
@@ -36,6 +37,7 @@ async function initClassroom() {
         if (error) throw error;
         allLessons = lessons || [];
 
+        // 3. ดึงความคืบหน้า
         if (userId) {
             const { data: progress } = await supabase
                 .from('student_progress')
@@ -117,6 +119,9 @@ window.changeLesson = (index) => {
     loadLesson(index);
 };
 
+// ==========================================
+// ส่วนที่แก้ไข: เพิ่มการแสดงปุ่ม PDF
+// ==========================================
 function loadLesson(index) {
     const lesson = allLessons[index];
     if (!lesson) return;
@@ -127,12 +132,13 @@ function loadLesson(index) {
     const quizBox = document.getElementById('quizContainer');
     const iframe = document.getElementById('mainVideo');
 
+    // Reset หน้าจอ
     videoBox.classList.add('d-none');
     quizBox.classList.add('d-none');
     iframe.src = "";
     contentEl.innerHTML = "";
 
-    // === QUIZ MODE ===
+    // กรณีเป็น QUIZ
     if (lesson.type === 'quiz') {
         try {
             currentQuizData = JSON.parse(lesson.content || '[]');
@@ -161,11 +167,10 @@ function loadLesson(index) {
         return; 
     }
 
-    // === LESSON MODE ===
-    // [สำคัญ] ใช้ innerHTML เพื่อให้แสดงรูปภาพได้
+    // กรณีเป็น LESSON (VDO/เนื้อหา)
     contentEl.innerHTML = lesson.content ? lesson.content.replace(/\n/g, '<br>') : "ไม่มีรายละเอียดเนื้อหา";
     
-    // แสดงวิดีโอ
+    // โชว์วิดีโอ
     if (lesson.video_url && lesson.video_url.length > 5) {
         let videoId = "";
         try {
@@ -176,11 +181,11 @@ function loadLesson(index) {
         if (videoId) { iframe.src = `https://www.youtube.com/embed/${videoId}`; videoBox.classList.remove('d-none'); }
     }
 
-    // === [NEW] แสดงปุ่มโหลด PDF (ถ้ามี) ===
+    // --- [สำคัญ] โชว์ปุ่ม PDF ถ้ามีลิงก์ ---
     if (lesson.pdf_url) {
         contentEl.innerHTML += `
             <div class="mt-4 pt-4 border-top">
-                <a href="${lesson.pdf_url}" target="_blank" class="btn btn-outline-danger w-100 rounded-pill py-2">
+                <a href="${lesson.pdf_url}" target="_blank" class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold shadow-sm">
                     <i class="bi bi-file-earmark-pdf-fill me-2"></i> ดาวน์โหลดเอกสารประกอบการเรียน (PDF)
                 </a>
             </div>
