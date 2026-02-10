@@ -7,6 +7,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+    <style>
+        /* สไตล์สำหรับ Drag & Drop */
+        .list-group-item { cursor: grab; user-select: none; }
+        .list-group-item:active { cursor: grabbing; }
+        .sortable-ghost { background-color: #e9ecef; opacity: 0.5; border: 1px dashed #999; }
+        
+        /* สไตล์กล่องข้อสอบ */
+        .question-box { transition: all 0.2s; border-left: 4px solid #0d6efd !important; }
+        .question-box:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -25,11 +38,11 @@
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-list-ul"></i> บทเรียนทั้งหมด</h5>
                         <button onclick="resetForm()" class="btn btn-sm btn-success rounded-pill px-3">
-                            <i class="bi bi-plus-lg"></i> เพิ่ม
+                            <i class="bi bi-plus-lg"></i> เพิ่มใหม่
                         </button>
                     </div>
                     <div class="card-body p-0">
-                        <div id="lessonList" class="list-group list-group-flush" style="max-height: 70vh; overflow-y: auto;">
+                        <div id="lessonList" class="list-group list-group-flush" style="max-height: 75vh; overflow-y: auto;">
                             <div class="text-center py-4 text-muted">กำลังโหลด...</div>
                         </div>
                     </div>
@@ -45,29 +58,28 @@
                         
                         <ul class="nav nav-pills mb-4 bg-light p-2 rounded">
                             <li class="nav-item w-50 text-center">
-                                <a class="nav-link active fw-bold" id="tabLesson" onclick="switchType('lesson')" href="#">
-                                    <i class="bi bi-play-btn-fill"></i> บทเรียน (VDO)
+                                <a class="nav-link active fw-bold" id="tabLesson" onclick="switchType('lesson')" href="javascript:void(0)">
+                                    <i class="bi bi-play-btn-fill me-2"></i> บทเรียน (VDO)
                                 </a>
                             </li>
                             <li class="nav-item w-50 text-center">
-                                <a class="nav-link fw-bold" id="tabQuiz" onclick="switchType('quiz')" href="#">
-                                    <i class="bi bi-patch-question-fill"></i> แบบทดสอบ (Quiz)
+                                <a class="nav-link fw-bold" id="tabQuiz" onclick="switchType('quiz')" href="javascript:void(0)">
+                                    <i class="bi bi-patch-question-fill me-2"></i> แบบทดสอบ (Quiz)
                                 </a>
                             </li>
                         </ul>
 
                         <form id="lessonForm">
-                            <input type="hidden" id="lessonId">
-                            <input type="hidden" id="lessonType" value="lesson"> <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">ชื่อหัวข้อ</label>
-                                <input type="text" id="lTitle" class="form-control" placeholder="เช่น บทที่ 1, แบบทดสอบท้ายบท" required>
+                            <input type="hidden" id="lessonId"> <input type="hidden" id="lessonType" value="lesson"> <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">ชื่อหัวข้อ / ชื่อบทเรียน</label>
+                                <input type="text" id="lTitle" class="form-control" placeholder="เช่น บทที่ 1: การติดตั้งโปรแกรม" required>
                             </div>
 
                             <div id="sectionLesson">
                                 <div class="mb-3">
                                     <label class="form-label text-muted small fw-bold">ลิงก์วิดีโอ (YouTube)</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-youtube text-danger"></i></span>
+                                        <span class="input-group-text bg-white"><i class="bi bi-youtube text-danger"></i></span>
                                         <input type="text" id="lVideo" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
                                     </div>
                                 </div>
@@ -78,20 +90,24 @@
                             </div>
 
                             <div id="sectionQuiz" style="display: none;">
+                                <div class="alert alert-info small py-2">
+                                    <i class="bi bi-info-circle me-1"></i> สร้างโจทย์และตัวเลือกคำตอบ อย่าลืมเลือกข้อที่ถูกต้อง (เฉลย)
+                                </div>
                                 <div id="questionContainer">
                                     </div>
-                                <button type="button" class="btn btn-outline-primary w-100 mb-4 border-dashed" onclick="addQuestionUI()">
-                                    <i class="bi bi-plus-circle"></i> เพิ่มข้อคำถาม
+                                <button type="button" class="btn btn-outline-primary w-100 mb-4 border-dashed py-2" onclick="addQuestionUI()">
+                                    <i class="bi bi-plus-circle me-1"></i> เพิ่มข้อคำถาม
                                 </button>
                             </div>
 
-                            <hr>
+                            <hr class="my-4">
+                            
                             <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill">
-                                    <i class="bi bi-save"></i> บันทึกข้อมูล
+                                <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill shadow-sm">
+                                    <i class="bi bi-save me-1"></i> บันทึกข้อมูล
                                 </button>
                                 <button type="button" id="btnDelete" class="btn btn-outline-danger px-3 rounded-pill d-none" onclick="deleteLesson()">
-                                    <i class="bi bi-trash"></i> ลบ
+                                    <i class="bi bi-trash me-1"></i> ลบ
                                 </button>
                             </div>
                         </form>
@@ -104,6 +120,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script type="module" src="js/manage_course.js"></script>
 </body>
 </html>
