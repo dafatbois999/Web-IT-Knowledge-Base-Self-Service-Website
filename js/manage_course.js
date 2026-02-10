@@ -12,13 +12,13 @@ if (!courseId) {
 loadCourseInfo();
 loadLessons();
 
-// โหลดข้อมูลคอร์ส
+// โหลดชื่อคอร์ส
 async function loadCourseInfo() {
     const { data } = await supabase.from('courses').select('title').eq('id', courseId).single();
     if (data) document.getElementById('courseTitle').innerText = data.title;
 }
 
-// โหลดรายการ
+// โหลดรายการ (ปรับปรุงให้รองรับ Drag & Drop)
 async function loadLessons() {
     const list = document.getElementById('lessonList');
     list.innerHTML = '<div class="text-center py-3">Loading...</div>';
@@ -28,7 +28,7 @@ async function loadLessons() {
         .select('*')
         .eq('course_id', courseId)
         .order('order_index', { ascending: true })
-        .order('id', { ascending: true });
+        .order('created_at', { ascending: true });
 
     if (error) return alert(error.message);
 
@@ -41,30 +41,61 @@ async function loadLessons() {
     lessons.forEach((l, index) => {
         let icon = l.type === 'quiz' ? '<i class="bi bi-patch-question-fill text-warning"></i>' : '<i class="bi bi-play-btn-fill text-primary"></i>';
         
+        // [สำคัญ] ใส่ data-id เพื่อใช้ตอนบันทึกลำดับ
         list.innerHTML += `
-            <button onclick="editLesson('${l.id}')" class="list-group-item list-group-item-action py-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>
-                        <span class="badge bg-light text-dark border me-2">${index + 1}</span> 
-                        ${icon} ${l.title}
-                    </span>
-                    <i class="bi bi-pencil-square text-muted"></i>
-                </div>
-            </button>
+            <div class="list-group-item list-group-item-action py-3 border-bottom d-flex justify-content-between align-items-center" data-id="${l.id}" onclick="editLesson('${l.id}')">
+                <span>
+                    <i class="bi bi-grip-vertical text-muted me-2 handle" style="cursor:grab"></i>
+                    ${icon} <span class="ms-1">${l.title}</span>
+                </span>
+                <i class="bi bi-pencil-square text-muted"></i>
+            </div>
         `;
     });
+
+    // เริ่มต้นระบบลากวาง (SortableJS)
+    initSortable();
+}
+
+// ฟังก์ชันลากวาง
+function initSortable() {
+    const el = document.getElementById('lessonList');
+    new Sortable(el, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        handle: '.list-group-item', // ลากได้ทั้งแถบ
+        onEnd: async function () {
+            // เมื่อวางเสร็จ ให้บันทึกลำดับใหม่
+            await saveOrder();
+        }
+    });
+}
+
+// บันทึกลำดับลง Database
+async function saveOrder() {
+    const items = document.querySelectorAll('#lessonList .list-group-item');
+    const updates = [];
+
+    items.forEach((item, index) => {
+        const id = item.getAttribute('data-id');
+        // เตรียมข้อมูลที่จะอัปเดต (id และ order_index ใหม่)
+        updates.push({ id: parseInt(id), order_index: index });
+    });
+
+    // อัปเดตทีละตัว (Supabase Upsert แบบ Bulk จะซับซ้อนกว่านี้ ใช้วิธีนี้ง่ายสุดสำหรับตอนนี้)
+    for (const update of updates) {
+        await supabase.from('lessons').update({ order_index: update.order_index }).eq('id', update.id);
+    }
+    
+    // console.log('Order updated!'); // เช็คใน Console ได้
 }
 
 // --- UI Management ---
 
 window.switchType = (type) => {
     document.getElementById('lessonType').value = type;
-    
-    // ปรับ Tab Active
     document.getElementById('tabLesson').classList.toggle('active', type === 'lesson');
     document.getElementById('tabQuiz').classList.toggle('active', type === 'quiz');
-
-    // Show/Hide Sections
     document.getElementById('sectionLesson').style.display = type === 'lesson' ? 'block' : 'none';
     document.getElementById('sectionQuiz').style.display = type === 'quiz' ? 'block' : 'none';
 };
@@ -74,18 +105,12 @@ window.resetForm = () => {
     document.getElementById('lessonId').value = '';
     document.getElementById('formTitle').innerText = 'เพิ่มเนื้อหาใหม่';
     document.getElementById('btnDelete').classList.add('d-none');
-    document.getElementById('questionContainer').innerHTML = ''; // เคลียร์ข้อสอบ
-    
-    // Default เป็น Lesson
+    document.getElementById('questionContainer').innerHTML = ''; 
     switchType('lesson');
 };
 
-// เพิ่มกล่องคำถาม (Quiz Builder)
 window.addQuestionUI = (data = null) => {
     const container = document.getElementById('questionContainer');
-    const qIndex = container.children.length + 1;
-    
-    // ค่าเริ่มต้น (กรณีเพิ่มใหม่) หรือค่าเดิม (กรณีแก้ไข)
     const qText = data ? data.q : '';
     const opt0 = data ? data.options[0] : '';
     const opt1 = data ? data.options[1] : '';
@@ -97,39 +122,19 @@ window.addQuestionUI = (data = null) => {
         <div class="card mb-3 border bg-light question-box">
             <div class="card-body position-relative">
                 <button type="button" class="btn-close position-absolute top-0 end-0 m-2" onclick="this.closest('.question-box').remove()"></button>
-                <h6 class="fw-bold text-primary mb-2">ข้อที่ <span class="q-num"></span></h6>
-                
+                <h6 class="fw-bold text-primary mb-2">คำถาม</h6>
                 <input class="form-control mb-2 fw-bold q-text" placeholder="ตั้งคำถาม..." value="${qText}" required>
-                
+                ${[0,1,2,3].map(i => `
                 <div class="input-group mb-2">
-                    <div class="input-group-text"><input type="radio" name="ans${Date.now()}" class="q-correct" value="0" ${correct == 0 ? 'checked' : ''}></div>
-                    <input class="form-control q-opt" placeholder="ตัวเลือก A" value="${opt0}" required>
-                </div>
-                <div class="input-group mb-2">
-                    <div class="input-group-text"><input type="radio" name="ans${Date.now()}" class="q-correct" value="1" ${correct == 1 ? 'checked' : ''}></div>
-                    <input class="form-control q-opt" placeholder="ตัวเลือก B" value="${opt1}" required>
-                </div>
-                <div class="input-group mb-2">
-                    <div class="input-group-text"><input type="radio" name="ans${Date.now()}" class="q-correct" value="2" ${correct == 2 ? 'checked' : ''}></div>
-                    <input class="form-control q-opt" placeholder="ตัวเลือก C" value="${opt2}" required>
-                </div>
-                <div class="input-group mb-2">
-                    <div class="input-group-text"><input type="radio" name="ans${Date.now()}" class="q-correct" value="3" ${correct == 3 ? 'checked' : ''}></div>
-                    <input class="form-control q-opt" placeholder="ตัวเลือก D" value="${opt3}" required>
-                </div>
-                <div class="form-text small text-danger">* ติ๊กเลือกข้อที่ถูกต้องเป็นเฉลย</div>
+                    <div class="input-group-text"><input type="radio" name="ans${Date.now()}" class="q-correct" value="${i}" ${correct == i ? 'checked' : ''}></div>
+                    <input class="form-control q-opt" placeholder="ตัวเลือก" value="${eval('opt'+i)}" required>
+                </div>`).join('')}
+                <div class="form-text small text-danger">* เลือกข้อที่ถูกต้อง</div>
             </div>
         </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
-    updateQuestionNumbers();
 };
-
-function updateQuestionNumbers() {
-    document.querySelectorAll('.question-box .q-num').forEach((el, index) => {
-        el.innerText = index + 1;
-    });
-}
 
 // --- Edit Mode ---
 window.editLesson = async (id) => {
@@ -140,10 +145,8 @@ window.editLesson = async (id) => {
         document.getElementById('formTitle').innerText = 'แก้ไขข้อมูล';
         document.getElementById('btnDelete').classList.remove('d-none');
 
-        // เช็คประเภท
         if (data.type === 'quiz') {
             switchType('quiz');
-            // Load คำถามจาก JSON
             const questions = JSON.parse(data.content || '[]');
             const container = document.getElementById('questionContainer');
             container.innerHTML = '';
@@ -173,18 +176,12 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
         video_url = document.getElementById('lVideo').value;
         content = document.getElementById('lContent').value;
     } else {
-        // Quiz: รวบรวมคำถามเป็น JSON
         const questions = [];
         document.querySelectorAll('.question-box').forEach(box => {
             const qText = box.querySelector('.q-text').value;
             const opts = Array.from(box.querySelectorAll('.q-opt')).map(i => i.value);
-            
-            // หาว่า Radio อันไหนถูกเลือก
             let correct = 0;
-            box.querySelectorAll('.q-correct').forEach((radio, idx) => {
-                if (radio.checked) correct = idx;
-            });
-
+            box.querySelectorAll('.q-correct').forEach((radio, idx) => { if (radio.checked) correct = idx; });
             questions.push({ q: qText, options: opts, answer: correct });
         });
         
@@ -193,10 +190,18 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
             btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
             return;
         }
-        content = JSON.stringify(questions); // แปลงเป็น Text เพื่อเก็บใน DB
+        content = JSON.stringify(questions);
+    }
+
+    // กำหนด order_index ให้ต่อท้ายสุด (เฉพาะตอนสร้างใหม่)
+    let orderIndex = 0;
+    if (!id) {
+        const { count } = await supabase.from('lessons').select('*', { count: 'exact', head: true }).eq('course_id', courseId);
+        orderIndex = count || 0;
     }
 
     const payload = { title, type, video_url, content, course_id: courseId };
+    if (!id) payload.order_index = orderIndex; // ใส่ลำดับต่อท้าย
 
     let error;
     if (id) {
@@ -210,7 +215,7 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     if (!error) {
         loadLessons();
         if (!id) resetForm();
-        alert('บันทึกเรียบร้อย');
+        // alert('บันทึกเรียบร้อย');
     } else {
         alert('Error: ' + error.message);
     }
