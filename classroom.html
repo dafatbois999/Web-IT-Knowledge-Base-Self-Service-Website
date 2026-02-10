@@ -39,6 +39,11 @@
         .check-btn:hover { border-color: #0d6efd; }
         .check-btn.completed { background-color: #198754; border-color: #198754; color: white; }
         
+        /* สไตล์ข้อสอบ */
+        .quiz-option { cursor: pointer; transition: 0.2s; }
+        .quiz-option:hover { background-color: #f8f9fa; }
+        .quiz-option input { cursor: pointer; }
+
         @media (max-width: 991px) { .playlist-box { height: auto; max-height: 500px; margin-top: 20px; } }
     </style>
 </head>
@@ -98,11 +103,30 @@
 
     <div class="container-fluid px-4 py-4">
         <div class="row g-4">
+            
             <div class="col-lg-8 col-xl-9">
+                
                 <div id="videoContainer" class="video-container mb-4 d-none">
                     <iframe id="mainVideo" src="" title="Video player" frameborder="0" allowfullscreen></iframe>
                 </div>
-                
+
+                <div id="quizContainer" class="card border-0 shadow-sm rounded-3 mb-4 d-none bg-white">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-patch-question-fill text-primary display-4"></i>
+                            <h3 class="fw-bold mt-3">แบบทดสอบท้ายบท</h3>
+                            <p class="text-muted">ตอบคำถามให้ถูกต้องเพื่อผ่านบทเรียนนี้</p>
+                        </div>
+                        <div id="quizBody">
+                            </div>
+                        <div class="mt-4 text-center">
+                            <button onclick="submitQuiz()" class="btn btn-primary px-5 rounded-pill fw-bold btn-lg shadow-sm">
+                                <i class="bi bi-send-check"></i> ส่งคำตอบ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card border-0 shadow-sm rounded-3">
                     <div class="card-body p-4 p-lg-5">
                         <h2 id="lessonTitle" class="fw-bold mb-3 text-dark">...</h2>
@@ -111,7 +135,9 @@
                             <span id="courseName">Loading...</span>
                         </div>
                         <hr class="opacity-10 mb-4">
-                        <div id="lessonContent" class="text-secondary" style="font-size: 1.1rem; line-height: 1.7;">กำลังโหลดเนื้อหา...</div>
+                        <div id="lessonContent" class="text-secondary" style="font-size: 1.1rem; line-height: 1.7;">
+                            กำลังโหลดเนื้อหา...
+                        </div>
                     </div>
                 </div>
             </div>
