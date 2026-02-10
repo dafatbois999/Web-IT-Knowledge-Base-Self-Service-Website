@@ -15,6 +15,8 @@ initClassroom();
 
 async function initClassroom() {
     try {
+        console.log("Start loading course ID:", courseId);
+
         // 1. ดึงชื่อคอร์ส
         const { data: course, error: courseError } = await supabase
             .from('courses')
@@ -23,8 +25,8 @@ async function initClassroom() {
             .single();
         
         if (course) {
-            document.getElementById('courseName').innerText = course.title;
-            // ถ้าอยากแก้ Title ของ Tab Browser ด้วย
+            safeSetText('courseHeader', course.title);
+            safeSetText('courseName', course.title);
             document.title = `${course.title} - ห้องเรียนออนไลน์`;
         }
 
@@ -38,29 +40,51 @@ async function initClassroom() {
 
         if (lessonError) throw lessonError;
 
+        // 3. ตรวจสอบว่ามีบทเรียนไหม
         const playlistBox = document.getElementById('playlist');
         
         if (!lessons || lessons.length === 0) {
-            playlistBox.innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหาในคอร์สนี้</div>';
-            document.getElementById('lessonTitle').innerText = "ยังไม่มีบทเรียน";
-            document.getElementById('lessonContent').innerText = "คุณครูยังไม่ได้เพิ่มเนื้อหาในคอร์สนี้";
-            document.getElementById('noVideoPlaceholder').style.display = 'flex'; 
-            document.getElementById('noVideoPlaceholder').innerHTML = '<h4 class="text-muted">ไม่มีข้อมูล</h4>';
+            console.warn("No lessons found. Check Database RLS policies.");
+            if (playlistBox) playlistBox.innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหาในคอร์สนี้</div>';
+            
+            safeSetText('lessonTitle', "ยังไม่มีบทเรียน");
+            safeSetText('lessonContent', "คุณครูยังไม่ได้เพิ่มเนื้อหาในคอร์สนี้ หรือคุณอาจไม่มีสิทธิ์เข้าถึง");
+            
+            // ซ่อนวิดีโอ โชว์ว่าง
+            const noVid = document.getElementById('noVideoPlaceholder');
+            if(noVid) {
+                noVid.style.display = 'flex';
+                noVid.innerHTML = '<h4 class="text-muted">ไม่พบข้อมูลบทเรียน</h4>';
+            }
             return;
         }
 
+        console.log(`Loaded ${lessons.length} lessons.`);
         allLessons = lessons;
         renderPlaylist();
-        loadLesson(0); // เล่นบทแรก
+        
+        // เล่นบทแรก
+        loadLesson(0);
 
     } catch (err) {
-        console.error("Error:", err);
-        // alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message); 
+        console.error("Critical Error:", err);
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    }
+}
+
+// ฟังก์ชันช่วยใส่ข้อความ (ป้องกัน Error ถ้าหา Element ไม่เจอ)
+function safeSetText(elementId, text) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.innerText = text;
+    } else {
+        console.warn(`Element ID '${elementId}' not found in HTML.`);
     }
 }
 
 function renderPlaylist() {
     const list = document.getElementById('playlist');
+    if (!list) return;
     list.innerHTML = '';
 
     allLessons.forEach((l, index) => {
@@ -84,6 +108,7 @@ function renderPlaylist() {
     });
 }
 
+// ทำให้ HTML เรียกใช้ได้
 window.changeLesson = (index) => {
     currentLessonIndex = index;
     renderPlaylist();
@@ -94,8 +119,8 @@ function loadLesson(index) {
     const lesson = allLessons[index];
     if (!lesson) return;
 
-    document.getElementById('lessonTitle').innerText = lesson.title;
-    document.getElementById('lessonContent').innerText = lesson.content || "ไม่มีรายละเอียดเนื้อหา";
+    safeSetText('lessonTitle', lesson.title);
+    safeSetText('lessonContent', lesson.content || "ไม่มีรายละเอียดเนื้อหา");
 
     const videoBox = document.getElementById('videoContainer');
     const noVideoBox = document.getElementById('noVideoPlaceholder');
@@ -109,10 +134,10 @@ function loadLesson(index) {
             else if (lesson.video_url.includes('embed/')) videoId = lesson.video_url.split('embed/')[1].split('?')[0];
         } catch (e) { console.error("URL Error", e); }
 
-        if (videoId) {
+        if (videoId && videoBox && iframe) {
             iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
             videoBox.classList.remove('d-none');
-            noVideoBox.style.display = 'none';
+            if(noVideoBox) noVideoBox.style.display = 'none';
         } else {
             showNoVideo();
         }
@@ -121,8 +146,8 @@ function loadLesson(index) {
     }
 
     function showNoVideo() {
-        iframe.src = "";
-        videoBox.classList.add('d-none');
-        noVideoBox.style.display = 'flex';
+        if(iframe) iframe.src = "";
+        if(videoBox) videoBox.classList.add('d-none');
+        if(noVideoBox) noVideoBox.style.display = 'flex';
     }
 }
