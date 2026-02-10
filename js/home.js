@@ -3,6 +3,7 @@ import { supabase } from './supabase-config.js';
 const grid = document.getElementById('grid');
 const noResult = document.getElementById('noResult');
 const loader = document.getElementById('loader');
+const userId = localStorage.getItem('user_id'); // [เพิ่ม] ดึง user_id มาใช้เช็ค progress
 let allData = []; 
 
 async function loadArticles() {
@@ -93,25 +94,55 @@ window.filterCat = (cat) => {
 
 loadArticles();
 
-// --- โหลดคอร์สเรียน (เพิ่มใหม่) ---
+// --- โหลดคอร์สเรียน พร้อมเช็คติ๊กถูก ✅ ---
 loadCourses();
 
 async function loadCourses() {
     const courseGrid = document.getElementById('courseListContainer');
-    if (!courseGrid) return; // ถ้าไม่มี element นี้ในหน้า ก็ไม่ต้องทำ
+    if (!courseGrid) return; 
 
+    // 1. ดึงข้อมูลคอร์ส
     const { data: courses, error } = await supabase
         .from('courses')
-        .select('*, users(full_name)') // join เอาชื่อคนสอน
+        .select('*, users(full_name)')
         .order('created_at', { ascending: false })
         .limit(6);
 
     if (courses && courses.length > 0) {
         courseGrid.innerHTML = '';
-        courses.forEach(c => {
+        
+        // ใช้ for...of เพื่อให้ await ทำงานใน loop ได้
+        for (const c of courses) {
             const img = c.thumbnail_url || 'https://via.placeholder.com/400x225?text=Course';
             const teacherName = c.users?.full_name || 'Teacher';
             
+            // --- [เพิ่ม] ส่วนเช็ค Progress ---
+            let isCompleted = false;
+            if (userId) {
+                // A. นับบทเรียนทั้งหมดในคอร์ส
+                const { count: totalLessons } = await supabase
+                    .from('lessons')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('course_id', c.id);
+
+                // B. นับบทเรียนที่ User เรียนจบ
+                const { count: completedLessons } = await supabase
+                    .from('student_progress')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('course_id', c.id)
+                    .eq('user_id', userId);
+
+                // C. เทียบกัน (ต้องมีบทเรียนอย่างน้อย 1 บท)
+                if (totalLessons > 0 && completedLessons >= totalLessons) {
+                    isCompleted = true;
+                }
+            }
+
+            // --- [เพิ่ม] กำหนด HTML ของติ๊กถูกและสีปุ่ม ---
+            const checkMark = isCompleted ? '<i class="bi bi-check-circle-fill text-success fs-5 ms-2"></i>' : '';
+            const btnClass = isCompleted ? 'btn-outline-success' : 'btn-outline-primary';
+            const btnText = isCompleted ? 'เรียนจบแล้ว' : 'เข้าเรียนทันที';
+
             courseGrid.innerHTML += `
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm border-0 card-hover">
@@ -120,14 +151,17 @@ async function loadCourses() {
                             <h5 class="fw-bold text-truncate">${c.title}</h5>
                             <p class="small text-muted mb-2">โดย: ${teacherName}</p>
                             <p class="card-text small text-secondary text-truncate-2">${c.description || '-'}</p>
-                            <a href="classroom.html?id=${c.id}" class="btn btn-outline-primary w-100 rounded-pill mt-2">
-                                เข้าเรียนทันที
-                            </a>
+                            
+                            <div class="d-flex align-items-center mt-3">
+                                <a href="classroom.html?id=${c.id}" class="btn ${btnClass} w-100 rounded-pill">
+                                    ${btnText}
+                                </a>
+                                ${checkMark} </div>
                         </div>
                     </div>
                 </div>
             `;
-        });
+        }
     } else {
         courseGrid.innerHTML = '<div class="col-12 text-center text-muted">ยังไม่มีคอร์สเรียน</div>';
     }
