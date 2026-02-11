@@ -12,7 +12,6 @@
         body { font-family: 'Sarabun', sans-serif; background-color: #e9ecef; }
         .navbar-custom { background-color: #343a40; }
         .card { border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        /* สไตล์แท็บ */
         .nav-pills .nav-link { color: #666; cursor: pointer; font-weight: 500; }
         .nav-pills .nav-link.active { background-color: #0d6efd; color: white; }
     </style>
@@ -120,6 +119,13 @@
                     <span class="fw-bold text-secondary"><i class="bi bi-people-fill"></i> รายชื่อผู้ใช้งาน (LMS)</span>
                     <button onclick="loadUsers()" class="btn btn-sm btn-light border"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
                 </div>
+                
+                <div class="p-3 bg-light border-bottom d-flex gap-2">
+                    <button onclick="filterUserRole('all')" id="btn-role-all" class="btn btn-sm btn-dark rounded-pill px-3">ทั้งหมด</button>
+                    <button onclick="filterUserRole('teacher')" id="btn-role-teacher" class="btn btn-sm btn-outline-dark rounded-pill px-3">ครู (Teachers)</button>
+                    <button onclick="filterUserRole('student')" id="btn-role-student" class="btn btn-sm btn-outline-dark rounded-pill px-3">นักเรียน (Students)</button>
+                </div>
+
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -156,7 +162,6 @@
             } else {
                 document.getElementById('tab-users').style.display = 'block';
                 document.querySelectorAll('.nav-pills .nav-link')[1].classList.add('active');
-                // โหลด User ทันทีที่กด
                 if(window.loadUsers) window.loadUsers();
             }
         }
