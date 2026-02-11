@@ -135,16 +135,13 @@ document.getElementById('insertImgFile')?.addEventListener('change', async (e) =
 
 
 // ==========================================
-// 3. USER MANAGEMENT (LMS System) - [UPDATED]
+// 3. USER MANAGEMENT (LMS System)
 // ==========================================
 
-let currentUserFilter = 'all'; // ตัวแปรเก็บสถานะ filter ปัจจุบัน
+let currentUserFilter = 'all'; 
 
-// ฟังก์ชันกดปุ่ม Filter
 window.filterUserRole = (role) => {
     currentUserFilter = role;
-    
-    // อัปเดตสีปุ่ม
     ['all', 'teacher', 'student'].forEach(r => {
         const btn = document.getElementById(`btn-role-${r}`);
         if(r === role) {
@@ -155,25 +152,19 @@ window.filterUserRole = (role) => {
             btn.classList.add('btn-outline-dark');
         }
     });
-
-    loadUsers(); // โหลดข้อมูลใหม่
+    loadUsers(); 
 }
 
-// ฟังก์ชันโหลดรายชื่อ (รองรับ Filter)
 window.loadUsers = async function() {
     const tbody = document.getElementById('userTableBody');
     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">กำลังโหลดรายชื่อ...</td></tr>';
     
-    // สร้าง Query พื้นฐาน (ไม่เอา admin)
     let query = supabase.from('users').select('*').neq('role', 'admin').order('id', { ascending: true });
-
-    // ถ้ามีการเลือก filter ให้เพิ่มเงื่อนไข
     if (currentUserFilter !== 'all') {
         query = query.eq('role', currentUserFilter);
     }
 
     const { data: users, error } = await query;
-
     tbody.innerHTML = '';
     if (error) { alert('Error: ' + error.message); return; }
     
@@ -185,13 +176,11 @@ window.loadUsers = async function() {
     users.forEach(u => {
         let roleBadge = u.role === 'teacher' ? 'bg-primary' : 'bg-success';
         let actionBtn = '';
-
         if (u.role === 'student') {
             actionBtn = `<button onclick="toggleRole(${u.id}, 'teacher')" class="btn btn-sm btn-outline-primary fw-bold">⬆ เลื่อนเป็นครู</button>`;
         } else {
             actionBtn = `<button onclick="toggleRole(${u.id}, 'student')" class="btn btn-sm btn-outline-warning fw-bold">⬇ ปรับเป็นนักเรียน</button>`;
         }
-
         tbody.innerHTML += `
             <tr>
                 <td class="ps-4 fw-bold text-dark">${u.username}</td>
@@ -206,10 +195,59 @@ window.loadUsers = async function() {
 window.toggleRole = async (id, newRole) => {
     if(confirm(`ยืนยันการเปลี่ยนสิทธิ์เป็น ${newRole.toUpperCase()} ?`)) {
         const { error } = await supabase.from('users').update({ role: newRole }).eq('id', id);
-        if(!error) {
-            loadUsers(); // โหลดใหม่ (จะยังคง filter เดิมไว้)
-        } else {
-            alert('Error: ' + error.message);
-        }
+        if(!error) loadUsers();
+        else alert('Error: ' + error.message);
+    }
+}
+
+// ==========================================
+// 4. COURSE MANAGEMENT (LMS System) - [NEW]
+// ==========================================
+
+window.loadCoursesAdmin = async function() {
+    const tbody = document.getElementById('courseTableBody');
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">กำลังโหลดข้อมูล...</td></tr>';
+
+    // ดึงข้อมูลคอร์ส และ join กับตาราง users เพื่อเอาชื่อคนสร้าง
+    const { data: courses, error } = await supabase
+        .from('courses')
+        .select('*, users(full_name, username)')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        alert('Error loading courses: ' + error.message);
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">เกิดข้อผิดพลาด</td></tr>';
+        return;
+    }
+
+    if (!courses || courses.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีคอร์สเรียนในระบบ</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    courses.forEach(c => {
+        // เช็คว่ามีข้อมูล user หรือไม่ ถ้าไม่มีให้โชว์ Unknown
+        const teacherName = c.users ? `${c.users.full_name || c.users.username}` : '<span class="text-muted">ไม่ระบุ</span>';
+        
+        tbody.innerHTML += `
+            <tr>
+                <td class="ps-4 fw-bold text-dark text-truncate" style="max-width: 200px;">${c.title}</td>
+                <td><span class="badge bg-info text-dark">${c.category || 'General'}</span></td>
+                <td>${teacherName}</td>
+                <td class="text-end pe-4">
+                    <a href="classroom.html?id=${c.id}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> ดู</a>
+                    <button onclick="delCourse(${c.id})" class="btn btn-sm btn-outline-danger ms-1"><i class="bi bi-trash"></i> ลบ</button>
+                </td>
+            </tr>
+        `;
+    });
+};
+
+window.delCourse = async (id) => {
+    if(confirm('ยืนยันที่จะลบคอร์สนี้? (ข้อมูลบทเรียนและคะแนนนักเรียนในคอร์สนี้จะหายไปด้วย)')) {
+        const { error } = await supabase.from('courses').delete().eq('id', id);
+        if (error) alert('Error: ' + error.message);
+        else loadCoursesAdmin(); // โหลดตารางใหม่
     }
 }
