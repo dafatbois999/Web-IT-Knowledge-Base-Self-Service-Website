@@ -201,12 +201,12 @@ window.toggleRole = async (id, newRole) => {
 }
 
 // ==========================================
-// 4. COURSE MANAGEMENT (LMS System) - [NEW]
+// 4. COURSE MANAGEMENT (LMS System) - [EDITED]
 // ==========================================
 
 window.loadCoursesAdmin = async function() {
     const tbody = document.getElementById('courseTableBody');
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">กำลังโหลดข้อมูล...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">กำลังโหลดข้อมูล...</td></tr>'; // ปรับเป็น colspan=3
 
     // ดึงข้อมูลคอร์ส และ join กับตาราง users เพื่อเอาชื่อคนสร้าง
     const { data: courses, error } = await supabase
@@ -216,12 +216,12 @@ window.loadCoursesAdmin = async function() {
 
     if (error) {
         alert('Error loading courses: ' + error.message);
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">เกิดข้อผิดพลาด</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">เกิดข้อผิดพลาด</td></tr>'; // ปรับเป็น colspan=3
         return;
     }
 
     if (!courses || courses.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีคอร์สเรียนในระบบ</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">ยังไม่มีคอร์สเรียนในระบบ</td></tr>'; // ปรับเป็น colspan=3
         return;
     }
 
@@ -232,8 +232,7 @@ window.loadCoursesAdmin = async function() {
         
         tbody.innerHTML += `
             <tr>
-                <td class="ps-4 fw-bold text-dark text-truncate" style="max-width: 200px;">${c.title}</td>
-                <td><span class="badge bg-info text-dark">${c.category || 'General'}</span></td>
+                <td class="ps-4 fw-bold text-dark text-truncate" style="max-width: 300px;">${c.title}</td>
                 <td>${teacherName}</td>
                 <td class="text-end pe-4">
                     <a href="classroom.html?id=${c.id}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> ดู</a>
