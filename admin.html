@@ -157,7 +157,6 @@
                             <thead class="bg-light text-secondary">
                                 <tr>
                                     <th class="ps-4">ชื่อคอร์ส</th>
-                                    <th>หมวดหมู่</th>
                                     <th>ผู้สร้าง (ครู)</th>
                                     <th class="text-end pe-4">จัดการ</th>
                                 </tr>
@@ -178,7 +177,7 @@
         function switchTab(tabName) {
             document.getElementById('tab-articles').style.display = 'none';
             document.getElementById('tab-users').style.display = 'none';
-            document.getElementById('tab-courses').style.display = 'none'; // ซ่อน tab ใหม่ด้วย
+            document.getElementById('tab-courses').style.display = 'none';
             
             document.querySelectorAll('.nav-pills .nav-link').forEach(l => l.classList.remove('active'));
 
@@ -189,7 +188,7 @@
                 document.getElementById('tab-users').style.display = 'block';
                 document.querySelectorAll('.nav-pills .nav-link')[1].classList.add('active');
                 if(window.loadUsers) window.loadUsers();
-            } else if (tabName === 'courses') { // [เพิ่มใหม่] logic เปิด tab คอร์ส
+            } else if (tabName === 'courses') {
                 document.getElementById('tab-courses').style.display = 'block';
                 document.querySelectorAll('.nav-pills .nav-link')[2].classList.add('active');
                 if(window.loadCoursesAdmin) window.loadCoursesAdmin();
