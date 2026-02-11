@@ -1,13 +1,13 @@
 import { supabase } from './supabase-config.js';
 
 // ==========================================
-// 1. AUTHENTICATION (ระบบเดิม)
+// 1. AUTHENTICATION
 // ==========================================
 if (!localStorage.getItem('admin_token')) {
     document.getElementById('loginModal').style.display = 'block';
 } else {
     document.getElementById('loginModal').style.display = 'none';
-    loadTable(); // โหลดบทความก่อน
+    loadTable(); 
 }
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -15,7 +15,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const u = document.getElementById('user').value;
     const p = document.getElementById('pass').value;
     
-    // เช็คจากตาราง admins (Admin สูงสุด)
     const { data } = await supabase.from('admins').select('*').eq('username', u).eq('password', p).single();
     if (data) { 
         localStorage.setItem('admin_token', 'true'); 
@@ -32,10 +31,8 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 
 
 // ==========================================
-// 2. ARTICLE MANAGEMENT (ระบบเดิม)
+// 2. ARTICLE MANAGEMENT
 // ==========================================
-// ... (ส่วนจัดการบทความคงเดิม ไม่แตะต้อง logic เก่า) ...
-
 function updateStats(data) {
     document.getElementById('statTotal').innerText = data.length;
     document.getElementById('statHardware').innerText = data.filter(i => i.category === 'Hardware').length;
@@ -138,26 +135,50 @@ document.getElementById('insertImgFile')?.addEventListener('change', async (e) =
 
 
 // ==========================================
-// 3. USER MANAGEMENT (LMS System) - [NEW]
+// 3. USER MANAGEMENT (LMS System) - [UPDATED]
 // ==========================================
 
-// ฟังก์ชันโหลดรายชื่อ User จากตาราง users
+let currentUserFilter = 'all'; // ตัวแปรเก็บสถานะ filter ปัจจุบัน
+
+// ฟังก์ชันกดปุ่ม Filter
+window.filterUserRole = (role) => {
+    currentUserFilter = role;
+    
+    // อัปเดตสีปุ่ม
+    ['all', 'teacher', 'student'].forEach(r => {
+        const btn = document.getElementById(`btn-role-${r}`);
+        if(r === role) {
+            btn.classList.remove('btn-outline-dark');
+            btn.classList.add('btn-dark');
+        } else {
+            btn.classList.remove('btn-dark');
+            btn.classList.add('btn-outline-dark');
+        }
+    });
+
+    loadUsers(); // โหลดข้อมูลใหม่
+}
+
+// ฟังก์ชันโหลดรายชื่อ (รองรับ Filter)
 window.loadUsers = async function() {
     const tbody = document.getElementById('userTableBody');
     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">กำลังโหลดรายชื่อ...</td></tr>';
     
-    // ดึงเฉพาะ role student และ teacher
-    const { data: users, error } = await supabase
-        .from('users')
-        .select('*')
-        .neq('role', 'admin') // ไม่ต้องโชว์ Admin ในหน้านี้
-        .order('id', { ascending: true });
+    // สร้าง Query พื้นฐาน (ไม่เอา admin)
+    let query = supabase.from('users').select('*').neq('role', 'admin').order('id', { ascending: true });
+
+    // ถ้ามีการเลือก filter ให้เพิ่มเงื่อนไข
+    if (currentUserFilter !== 'all') {
+        query = query.eq('role', currentUserFilter);
+    }
+
+    const { data: users, error } = await query;
 
     tbody.innerHTML = '';
     if (error) { alert('Error: ' + error.message); return; }
     
     if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีผู้ใช้งาน</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีผู้ใช้งานในกลุ่มนี้</td></tr>';
         return;
     }
 
@@ -165,12 +186,9 @@ window.loadUsers = async function() {
         let roleBadge = u.role === 'teacher' ? 'bg-primary' : 'bg-success';
         let actionBtn = '';
 
-        // ถ้าเป็น student -> ปุ่ม Promote เป็น Teacher
         if (u.role === 'student') {
             actionBtn = `<button onclick="toggleRole(${u.id}, 'teacher')" class="btn btn-sm btn-outline-primary fw-bold">⬆ เลื่อนเป็นครู</button>`;
-        } 
-        // ถ้าเป็น teacher -> ปุ่ม Demote เป็น Student
-        else {
+        } else {
             actionBtn = `<button onclick="toggleRole(${u.id}, 'student')" class="btn btn-sm btn-outline-warning fw-bold">⬇ ปรับเป็นนักเรียน</button>`;
         }
 
@@ -185,12 +203,11 @@ window.loadUsers = async function() {
     });
 }
 
-// ฟังก์ชันสลับ Role
 window.toggleRole = async (id, newRole) => {
     if(confirm(`ยืนยันการเปลี่ยนสิทธิ์เป็น ${newRole.toUpperCase()} ?`)) {
         const { error } = await supabase.from('users').update({ role: newRole }).eq('id', id);
         if(!error) {
-            loadUsers(); // โหลดตารางใหม่
+            loadUsers(); // โหลดใหม่ (จะยังคง filter เดิมไว้)
         } else {
             alert('Error: ' + error.message);
         }
