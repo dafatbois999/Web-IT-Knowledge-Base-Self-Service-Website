@@ -201,14 +201,13 @@ window.toggleRole = async (id, newRole) => {
 }
 
 // ==========================================
-// 4. COURSE MANAGEMENT (LMS System) - [EDITED]
+// 4. COURSE MANAGEMENT (LMS System)
 // ==========================================
 
 window.loadCoursesAdmin = async function() {
     const tbody = document.getElementById('courseTableBody');
-    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">กำลังโหลดข้อมูล...</td></tr>'; // ปรับเป็น colspan=3
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">กำลังโหลดข้อมูล...</td></tr>';
 
-    // ดึงข้อมูลคอร์ส และ join กับตาราง users เพื่อเอาชื่อคนสร้าง
     const { data: courses, error } = await supabase
         .from('courses')
         .select('*, users(full_name, username)')
@@ -216,18 +215,22 @@ window.loadCoursesAdmin = async function() {
 
     if (error) {
         alert('Error loading courses: ' + error.message);
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">เกิดข้อผิดพลาด</td></tr>'; // ปรับเป็น colspan=3
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">เกิดข้อผิดพลาด</td></tr>';
         return;
     }
 
+    // [ใหม่] อัปเดตตัวเลขใน Dashboard
+    if (courses) {
+        document.getElementById('courseCount').innerText = courses.length;
+    }
+
     if (!courses || courses.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">ยังไม่มีคอร์สเรียนในระบบ</td></tr>'; // ปรับเป็น colspan=3
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">ยังไม่มีคอร์สเรียนในระบบ</td></tr>';
         return;
     }
 
     tbody.innerHTML = '';
     courses.forEach(c => {
-        // เช็คว่ามีข้อมูล user หรือไม่ ถ้าไม่มีให้โชว์ Unknown
         const teacherName = c.users ? `${c.users.full_name || c.users.username}` : '<span class="text-muted">ไม่ระบุ</span>';
         
         tbody.innerHTML += `
@@ -247,6 +250,6 @@ window.delCourse = async (id) => {
     if(confirm('ยืนยันที่จะลบคอร์สนี้? (ข้อมูลบทเรียนและคะแนนนักเรียนในคอร์สนี้จะหายไปด้วย)')) {
         const { error } = await supabase.from('courses').delete().eq('id', id);
         if (error) alert('Error: ' + error.message);
-        else loadCoursesAdmin(); // โหลดตารางใหม่
+        else loadCoursesAdmin(); 
     }
 }
