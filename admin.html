@@ -48,6 +48,9 @@
             <li class="nav-item">
                 <a class="nav-link" onclick="switchTab('users')"><i class="bi bi-people-fill"></i> ผู้ใช้งาน (LMS)</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="switchTab('courses')"><i class="bi bi-mortarboard-fill"></i> คอร์สเรียน</a>
+            </li>
         </ul>
 
         <div id="tab-articles">
@@ -61,7 +64,7 @@
             <div class="row">
                 <div class="col-md-5 mb-4">
                     <div class="card border-0 sticky-top" style="top: 20px; z-index: 100;">
-                        <div class="card-header bg-white fw-bold text-secondary border-bottom py-3" id="formHeader">
+                        <div class="card-header bg-white fw-bold text-secondary border-bottom py-3">
                             <i class="bi bi-plus-lg"></i> เพิ่มบทความใหม่
                         </div>
                         <div class="card-body">
@@ -119,13 +122,11 @@
                     <span class="fw-bold text-secondary"><i class="bi bi-people-fill"></i> รายชื่อผู้ใช้งาน (LMS)</span>
                     <button onclick="loadUsers()" class="btn btn-sm btn-light border"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
                 </div>
-                
                 <div class="p-3 bg-light border-bottom d-flex gap-2">
                     <button onclick="filterUserRole('all')" id="btn-role-all" class="btn btn-sm btn-dark rounded-pill px-3">ทั้งหมด</button>
                     <button onclick="filterUserRole('teacher')" id="btn-role-teacher" class="btn btn-sm btn-outline-dark rounded-pill px-3">ครู (Teachers)</button>
                     <button onclick="filterUserRole('student')" id="btn-role-student" class="btn btn-sm btn-outline-dark rounded-pill px-3">นักเรียน (Students)</button>
                 </div>
-
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -144,6 +145,30 @@
             </div>
         </div>
 
+        <div id="tab-courses" style="display: none;">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <span class="fw-bold text-secondary"><i class="bi bi-mortarboard-fill"></i> รายการคอร์สเรียนทั้งหมด</span>
+                    <button onclick="loadCoursesAdmin()" class="btn btn-sm btn-light border"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-secondary">
+                                <tr>
+                                    <th class="ps-4">ชื่อคอร์ส</th>
+                                    <th>หมวดหมู่</th>
+                                    <th>ผู้สร้าง (ครู)</th>
+                                    <th class="text-end pe-4">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="courseTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -153,16 +178,21 @@
         function switchTab(tabName) {
             document.getElementById('tab-articles').style.display = 'none';
             document.getElementById('tab-users').style.display = 'none';
+            document.getElementById('tab-courses').style.display = 'none'; // ซ่อน tab ใหม่ด้วย
             
             document.querySelectorAll('.nav-pills .nav-link').forEach(l => l.classList.remove('active'));
 
             if (tabName === 'articles') {
                 document.getElementById('tab-articles').style.display = 'block';
                 document.querySelectorAll('.nav-pills .nav-link')[0].classList.add('active');
-            } else {
+            } else if (tabName === 'users') {
                 document.getElementById('tab-users').style.display = 'block';
                 document.querySelectorAll('.nav-pills .nav-link')[1].classList.add('active');
                 if(window.loadUsers) window.loadUsers();
+            } else if (tabName === 'courses') { // [เพิ่มใหม่] logic เปิด tab คอร์ส
+                document.getElementById('tab-courses').style.display = 'block';
+                document.querySelectorAll('.nav-pills .nav-link')[2].classList.add('active');
+                if(window.loadCoursesAdmin) window.loadCoursesAdmin();
             }
         }
     </script>
