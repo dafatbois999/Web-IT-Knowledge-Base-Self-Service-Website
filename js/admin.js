@@ -29,14 +29,14 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     location.reload();
 });
 
-// [เพิ่มใหม่] เปิด Modal เพิ่ม Admin
+// เปิด Modal เพิ่ม Admin
 window.openAddAdminModal = () => {
     const modalEl = document.getElementById('addAdminModal');
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
 }
 
-// [เพิ่มใหม่] บันทึก Admin ลงฐานข้อมูล
+// บันทึก Admin ลงฐานข้อมูล
 document.getElementById('addAdminForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('newAdminUser').value.trim();
@@ -162,7 +162,7 @@ document.getElementById('insertImgFile')?.addEventListener('change', async (e) =
 
 
 // ==========================================
-// 3. USER MANAGEMENT (LMS System)
+// 3. USER MANAGEMENT (LMS System) - [UPDATED]
 // ==========================================
 
 let currentUserFilter = 'all'; 
@@ -208,22 +208,44 @@ window.loadUsers = async function() {
         } else {
             actionBtn = `<button onclick="toggleRole(${u.id}, 'student')" class="btn btn-sm btn-outline-warning fw-bold">⬇ ปรับเป็นนักเรียน</button>`;
         }
+
+        // เพิ่มปุ่มลบ (Delete) สีแดง
+        let deleteBtn = `<button onclick="deleteUser(${u.id}, '${u.username}')" class="btn btn-sm btn-outline-danger ms-2" title="ลบผู้ใช้"><i class="bi bi-trash-fill"></i></button>`;
+
         tbody.innerHTML += `
             <tr>
                 <td class="ps-4 fw-bold text-dark">${u.username}</td>
                 <td>${u.full_name || '-'}</td>
                 <td><span class="badge ${roleBadge}">${u.role.toUpperCase()}</span></td>
-                <td class="text-end pe-4">${actionBtn}</td>
+                <td class="text-end pe-4">
+                    ${actionBtn}
+                    ${deleteBtn}
+                </td>
             </tr>
         `;
     });
 }
 
+// ฟังก์ชันเปลี่ยน Role
 window.toggleRole = async (id, newRole) => {
     if(confirm(`ยืนยันการเปลี่ยนสิทธิ์เป็น ${newRole.toUpperCase()} ?`)) {
         const { error } = await supabase.from('users').update({ role: newRole }).eq('id', id);
         if(!error) loadUsers();
         else alert('Error: ' + error.message);
+    }
+}
+
+// [เพิ่มใหม่] ฟังก์ชันลบ User
+window.deleteUser = async (id, name) => {
+    if(confirm(`⚠️ คำเตือน: คุณต้องการลบผู้ใช้ "${name}" ใช่หรือไม่?\nการกระทำนี้ไม่สามารถย้อนกลับได้!`)) {
+        const { error } = await supabase.from('users').delete().eq('id', id);
+        
+        if(error) {
+            alert('ลบไม่สำเร็จ: ' + error.message);
+        } else {
+            alert('ลบผู้ใช้เรียบร้อยแล้ว');
+            loadUsers(); // รีโหลดตาราง
+        }
     }
 }
 
