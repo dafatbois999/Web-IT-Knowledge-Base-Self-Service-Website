@@ -3,8 +3,21 @@ import { supabase } from './supabase-config.js';
 const grid = document.getElementById('grid');
 const noResult = document.getElementById('noResult');
 const loader = document.getElementById('loader');
-const userId = localStorage.getItem('user_id'); // [เพิ่ม] ดึง user_id มาใช้เช็ค progress
-let allData = []; 
+const userId = localStorage.getItem('user_id');
+
+// ตัวแปร Pagination - บทความ
+let allArticlesData = [];       // เก็บข้อมูลบทความทั้งหมด
+let filteredArticles = [];      // เก็บข้อมูลที่ผ่านการกรอง (Search/Category)
+let currentArticlePage = 1;
+const articlesPerPage = 6;      // จำนวนบทความต่อหน้า
+
+// ตัวแปร Pagination - คอร์ส
+let currentCoursePage = 1;
+const coursesPerPage = 6;       // จำนวนคอร์สต่อหน้า
+
+// =========================================================
+// PART 1: บทความ (Articles) - Client-side Pagination
+// =========================================================
 
 async function loadArticles() {
     try {
@@ -15,8 +28,11 @@ async function loadArticles() {
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        allData = data || [];
-        render(allData);
+        
+        allArticlesData = data || [];
+        filteredArticles = allArticlesData; // เริ่มต้นโชว์ทั้งหมด
+        
+        renderArticles(); // แสดงผลหน้าแรก
 
     } catch (err) {
         console.error(err);
@@ -25,16 +41,37 @@ async function loadArticles() {
     }
 }
 
-function render(list) {
+// ฟังก์ชันเปลี่ยนหน้าบทความ
+window.changeArticlePage = (direction) => {
+    const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
+    const newPage = currentArticlePage + direction;
+
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentArticlePage = newPage;
+        renderArticles();
+    }
+};
+
+function renderArticles() {
+    if(!grid) return;
     grid.innerHTML = '';
-    if (list.length === 0) {
+
+    // ถ้าไม่มีข้อมูล
+    if (filteredArticles.length === 0) {
         if(noResult) noResult.classList.remove('d-none');
+        document.getElementById('articlePagination').classList.add('d-none');
         return;
     } else {
         if(noResult) noResult.classList.add('d-none');
     }
 
-    list.forEach((item, index) => {
+    // คำนวณ Slice ข้อมูลตามหน้า
+    const start = (currentArticlePage - 1) * articlesPerPage;
+    const end = start + articlesPerPage;
+    const pageData = filteredArticles.slice(start, end);
+
+    // วนลูปสร้างการ์ด
+    pageData.forEach((item, index) => {
         const imgHTML = item.image_url 
             ? `<img src="${item.image_url}" class="card-img-top" loading="lazy" style="height:200px; object-fit:cover;">`
             : `<div class="bg-light d-flex align-items-center justify-content-center text-secondary" style="height:200px;"><i class="bi bi-image fs-1 opacity-25"></i></div>`;
@@ -45,7 +82,7 @@ function render(list) {
         if (item.category === 'Software') badgeColor = 'bg-info text-dark';
 
         grid.innerHTML += `
-        <div class="col-md-4 fade-in" style="animation-delay: ${index * 0.05}s">
+        <div class="col-md-4 fade-in">
             <a href="article.html?id=${item.id}" class="text-decoration-none text-dark">
                 <div class="card card-hover h-100 shadow-sm border-0">
                     ${imgHTML}
@@ -63,106 +100,182 @@ function render(list) {
             </a>
         </div>`;
     });
+
+    // อัปเดตปุ่ม Pagination บทความ
+    updateArticlePaginationUI();
 }
 
-// Search Logic
+function updateArticlePaginationUI() {
+    const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
+    const paginationBox = document.getElementById('articlePagination');
+    const indicator = document.getElementById('articlePageIndicator');
+    const btnPrev = document.getElementById('btnArtPrev');
+    const btnNext = document.getElementById('btnArtNext');
+
+    if (totalPages <= 1) {
+        paginationBox.classList.add('d-none');
+    } else {
+        paginationBox.classList.remove('d-none');
+        indicator.innerText = `${currentArticlePage} / ${totalPages}`;
+        
+        btnPrev.disabled = currentArticlePage === 1;
+        btnNext.disabled = currentArticlePage === totalPages;
+    }
+}
+
+// Search Logic (กรองบทความ)
 const mainSearchInput = document.getElementById('searchInput');
 if (mainSearchInput) {
     mainSearchInput.addEventListener('input', (e) => {
         const txt = e.target.value.toLowerCase().trim();
-        const filtered = allData.filter(item => 
+        // กรองจากข้อมูลทั้งหมด
+        filteredArticles = allArticlesData.filter(item => 
             (item.title && item.title.toLowerCase().includes(txt)) ||
             (item.content && item.content.toLowerCase().includes(txt)) ||
             (item.category && item.category.toLowerCase().includes(txt))
         );
-        render(filtered);
+        currentArticlePage = 1; // รีเซ็ตไปหน้า 1
+        renderArticles();
     });
 }
 
 window.toggleSearch = () => {
     const box = document.getElementById('navSearchBox');
     const input = document.getElementById('navSearchInput');
-    box.classList.toggle('search-box-active');
-    if (box.classList.contains('search-box-active')) input.focus();
+    if(box) {
+        box.classList.toggle('search-box-active');
+        if (box.classList.contains('search-box-active')) input.focus();
+    }
 };
 
 window.filterCat = (cat) => {
+    // เปลี่ยนสีปุ่ม
     document.querySelectorAll('.btn-light').forEach(btn => btn.classList.remove('active', 'fw-bold'));
     document.getElementById(`btn${cat}`)?.classList.add('active', 'fw-bold');
-    render(cat === 'All' ? allData : allData.filter(item => item.category === cat));
+    
+    // กรองข้อมูล
+    if (cat === 'All') {
+        filteredArticles = allArticlesData;
+    } else {
+        filteredArticles = allArticlesData.filter(item => item.category === cat);
+    }
+    currentArticlePage = 1; // รีเซ็ตไปหน้า 1
+    renderArticles();
 };
 
-loadArticles();
 
-// --- โหลดคอร์สเรียน พร้อมเช็คติ๊กถูก ✅ ---
-loadCourses();
+// =========================================================
+// PART 2: คอร์สเรียน (Courses) - Server-side Pagination
+// =========================================================
 
-async function loadCourses() {
+// ฟังก์ชันเปลี่ยนหน้าคอร์ส
+window.changeCoursePage = (direction) => {
+    currentCoursePage += direction;
+    loadCourses(currentCoursePage);
+};
+
+async function loadCourses(page = 1) {
     const courseGrid = document.getElementById('courseListContainer');
-    if (!courseGrid) return; 
+    const paginationBox = document.getElementById('coursePagination');
+    
+    if (!courseGrid) return;
 
-    // 1. ดึงข้อมูลคอร์ส
-    const { data: courses, error } = await supabase
+    // คำนวณช่วงข้อมูล (Range)
+    const from = (page - 1) * coursesPerPage;
+    const to = from + coursesPerPage - 1;
+
+    // ดึงข้อมูล + จำนวนรวม
+    const { data: courses, count, error } = await supabase
         .from('courses')
-        .select('*, users(full_name)')
+        .select('*, users(full_name)', { count: 'exact' }) 
         .order('created_at', { ascending: false })
-        .limit(6);
+        .range(from, to);
 
-    if (courses && courses.length > 0) {
-        courseGrid.innerHTML = '';
+    if (error) {
+        console.error(error);
+        courseGrid.innerHTML = `<div class="col-12 text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>`;
+        return;
+    }
+
+    if (!courses || courses.length === 0) {
+        courseGrid.innerHTML = '<div class="col-12 text-center text-muted py-5">ยังไม่มีคอร์สเรียนในขณะนี้</div>';
+        if(paginationBox) paginationBox.classList.add('d-none');
+        return;
+    }
+
+    courseGrid.innerHTML = '';
+    
+    for (const c of courses) {
+        const img = c.thumbnail_url || 'https://via.placeholder.com/400x225?text=Course';
+        const teacherName = c.users?.full_name || 'Teacher';
         
-        // ใช้ for...of เพื่อให้ await ทำงานใน loop ได้
-        for (const c of courses) {
-            const img = c.thumbnail_url || 'https://via.placeholder.com/400x225?text=Course';
-            const teacherName = c.users?.full_name || 'Teacher';
-            
-            // --- [เพิ่ม] ส่วนเช็ค Progress ---
-            let isCompleted = false;
-            if (userId) {
-                // A. นับบทเรียนทั้งหมดในคอร์ส
-                const { count: totalLessons } = await supabase
-                    .from('lessons')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('course_id', c.id);
-
-                // B. นับบทเรียนที่ User เรียนจบ
-                const { count: completedLessons } = await supabase
-                    .from('student_progress')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('course_id', c.id)
-                    .eq('user_id', userId);
-
-                // C. เทียบกัน (ต้องมีบทเรียนอย่างน้อย 1 บท)
-                if (totalLessons > 0 && completedLessons >= totalLessons) {
-                    isCompleted = true;
-                }
+        // เช็ค Progress
+        let isCompleted = false;
+        if (userId) {
+            const { count: totalLessons } = await supabase.from('lessons').select('*', { count: 'exact', head: true }).eq('course_id', c.id);
+            const { count: completedLessons } = await supabase.from('student_progress').select('*', { count: 'exact', head: true }).eq('course_id', c.id).eq('user_id', userId);
+            if (totalLessons > 0 && completedLessons >= totalLessons) {
+                isCompleted = true;
             }
+        }
 
-            // --- [เพิ่ม] กำหนด HTML ของติ๊กถูกและสีปุ่ม ---
-            const checkMark = isCompleted ? '<i class="bi bi-check-circle-fill text-success fs-5 ms-2"></i>' : '';
-            const btnClass = isCompleted ? 'btn-outline-success' : 'btn-outline-primary';
-            const btnText = isCompleted ? 'เรียนจบแล้ว' : 'เข้าเรียนทันที';
+        const checkMark = isCompleted ? '<i class="bi bi-check-circle-fill text-success fs-5 ms-2"></i>' : '';
+        const btnClass = isCompleted ? 'btn-outline-success' : 'btn-outline-primary';
+        const btnText = isCompleted ? 'เรียนจบแล้ว' : 'เข้าเรียนทันที';
 
-            courseGrid.innerHTML += `
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-0 card-hover">
-                        <img src="${img}" class="card-img-top" style="height: 180px; object-fit: cover;">
-                        <div class="card-body">
-                            <h5 class="fw-bold text-truncate">${c.title}</h5>
-                            <p class="small text-muted mb-2">โดย: ${teacherName}</p>
-                            <p class="card-text small text-secondary text-truncate-2">${c.description || '-'}</p>
-                            
-                            <div class="d-flex align-items-center mt-3">
-                                <a href="classroom.html?id=${c.id}" class="btn ${btnClass} w-100 rounded-pill">
-                                    ${btnText}
-                                </a>
-                                ${checkMark} </div>
+        courseGrid.innerHTML += `
+            <div class="col-md-4 fade-in">
+                <div class="card h-100 shadow-sm border-0 card-hover">
+                    <img src="${img}" class="card-img-top" style="height: 180px; object-fit: cover;">
+                    <div class="card-body d-flex flex-column">
+                        <div class="mb-2">
+                            <span class="badge bg-light text-secondary border">${c.category || 'General'}</span>
+                        </div>
+                        <h5 class="fw-bold text-truncate">${c.title}</h5>
+                        <p class="small text-muted mb-2">โดย: ${teacherName}</p>
+                        <p class="card-text small text-secondary text-truncate-2 flex-grow-1">${c.description || '-'}</p>
+                        
+                        <div class="d-flex align-items-center mt-3">
+                            <a href="classroom.html?id=${c.id}" class="btn ${btnClass} w-100 rounded-pill">
+                                ${btnText}
+                            </a>
+                            ${checkMark}
                         </div>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
+    }
+
+    // อัปเดต UI ปุ่มเปลี่ยนหน้าคอร์ส
+    if(paginationBox) {
+        paginationBox.classList.remove('d-none');
+        const btnPrev = document.getElementById('btnCoursePrev');
+        const btnNext = document.getElementById('btnCourseNext');
+        const pageIndicator = document.getElementById('coursePageIndicator');
+
+        pageIndicator.innerText = `หน้า ${currentCoursePage}`;
+
+        // ปุ่มก่อนหน้า
+        if (currentCoursePage === 1) {
+            btnPrev.disabled = true;
+            btnPrev.classList.add('disabled');
+        } else {
+            btnPrev.disabled = false;
+            btnPrev.classList.remove('disabled');
         }
-    } else {
-        courseGrid.innerHTML = '<div class="col-12 text-center text-muted">ยังไม่มีคอร์สเรียน</div>';
+
+        // ปุ่มถัดไป
+        if (to + 1 >= count) {
+            btnNext.disabled = true;
+            btnNext.classList.add('disabled');
+        } else {
+            btnNext.disabled = false;
+            btnNext.classList.remove('disabled');
+        }
     }
 }
+
+// เริ่มทำงาน
+loadArticles();
+loadCourses(1);
