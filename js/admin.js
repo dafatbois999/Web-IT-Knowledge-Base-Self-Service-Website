@@ -29,6 +29,33 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     location.reload();
 });
 
+// [เพิ่มใหม่] เปิด Modal เพิ่ม Admin
+window.openAddAdminModal = () => {
+    const modalEl = document.getElementById('addAdminModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+// [เพิ่มใหม่] บันทึก Admin ลงฐานข้อมูล
+document.getElementById('addAdminForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const u = document.getElementById('newAdminUser').value.trim();
+    const p = document.getElementById('newAdminPass').value.trim();
+
+    if(!u || !p) return alert('กรุณากรอกข้อมูลให้ครบ');
+
+    if(confirm(`ยืนยันการเพิ่ม Admin: ${u} ?`)) {
+        const { error } = await supabase.from('admins').insert({ username: u, password: p });
+        
+        if(error) {
+            alert('Error: ' + error.message);
+        } else {
+            alert('เพิ่ม Admin เรียบร้อย!');
+            location.reload(); 
+        }
+    }
+});
+
 
 // ==========================================
 // 2. ARTICLE MANAGEMENT
@@ -219,7 +246,7 @@ window.loadCoursesAdmin = async function() {
         return;
     }
 
-    // [ใหม่] อัปเดตตัวเลขใน Dashboard
+    // อัปเดตตัวเลขใน Dashboard
     if (courses) {
         document.getElementById('courseCount').innerText = courses.length;
     }
