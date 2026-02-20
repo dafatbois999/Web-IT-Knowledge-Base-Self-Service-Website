@@ -229,7 +229,7 @@ async function loadCourses(page = 1) {
                     <img src="${img}" class="card-img-top" style="height: 180px; object-fit: cover;">
                     <div class="card-body d-flex flex-column">
                         <div class="mb-2">
-                            <span class="badge bg-light text-secondary border">${c.category || 'General'}</span>
+                            <span class="badge bg-light text-secondary border">${c.category || 'G'}</span>
                         </div>
                         <h5 class="fw-bold text-truncate">${c.title}</h5>
                         <p class="small text-muted mb-2">โดย: ${teacherName}</p>
@@ -279,3 +279,4 @@ async function loadCourses(page = 1) {
 // เริ่มทำงาน
 loadArticles();
 loadCourses(1);
+
