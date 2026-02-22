@@ -97,34 +97,35 @@
             <button onclick="filterCat('Network')" class="btn btn-light rounded-pill shadow-sm border px-3" id="btnNetwork">Network</button>
         </div>
         
-        <div class="row g-4" id="grid"></div>
-        <div id="noResult" class="text-center text-muted mt-5 d-none"><p class="fs-5">ไม่พบข้อมูล</p></div>
-
-        <div id="articlePagination" class="d-flex justify-content-center align-items-center gap-3 mt-5 d-none">
-            <button onclick="changeArticlePage(-1)" id="btnArtPrev" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                <i class="bi bi-chevron-left"></i>
+        <div class="carousel-wrapper">
+            <button onclick="scrollCarousel('grid', -1)" class="btn btn-primary rounded-circle carousel-btn left">
+                <i class="bi bi-chevron-left fs-5"></i>
             </button>
-            <span id="articlePageIndicator" class="small text-muted fw-bold">1 / 1</span>
-            <button onclick="changeArticlePage(1)" id="btnArtNext" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                <i class="bi bi-chevron-right"></i>
+            
+            <div id="grid" class="carousel-container gap-4"></div>
+            
+            <button onclick="scrollCarousel('grid', 1)" class="btn btn-primary rounded-circle carousel-btn right">
+                <i class="bi bi-chevron-right fs-5"></i>
             </button>
         </div>
+
+        <div id="noResult" class="text-center text-muted mt-5 d-none"><p class="fs-5">ไม่พบข้อมูล</p></div>
     </div>
 
     <div class="container py-5 border-top">
-        <h3 class="fw-bold mb-4 text-center"> คอร์สเรียนออนไลน์</h3>
+        <h3 class="fw-bold mb-4 text-center">คอร์สเรียนออนไลน์</h3>
         
-        <div class="row g-4" id="courseListContainer">
-            <div class="text-center text-muted">กำลังโหลดคอร์ส...</div>
-        </div>
-
-        <div id="coursePagination" class="d-flex justify-content-center align-items-center gap-3 mt-5 d-none">
-            <button onclick="changeCoursePage(-1)" id="btnCoursePrev" class="btn btn-outline-secondary rounded-pill px-4">
-                <i class="bi bi-chevron-left"></i> ก่อนหน้า
+        <div class="carousel-wrapper">
+            <button onclick="scrollCarousel('courseListContainer', -1)" class="btn btn-primary rounded-circle carousel-btn left">
+                <i class="bi bi-chevron-left fs-5"></i>
             </button>
-            <span id="coursePageIndicator" class="fw-bold text-muted">หน้า 1</span>
-            <button onclick="changeCoursePage(1)" id="btnCourseNext" class="btn btn-outline-primary rounded-pill px-4">
-                ถัดไป <i class="bi bi-chevron-right"></i>
+            
+            <div id="courseListContainer" class="carousel-container gap-4">
+                <div class="text-center text-muted w-100 py-4">กำลังโหลดคอร์ส...</div>
+            </div>
+
+            <button onclick="scrollCarousel('courseListContainer', 1)" class="btn btn-primary rounded-circle carousel-btn right">
+                <i class="bi bi-chevron-right fs-5"></i>
             </button>
         </div>
     </div>
@@ -149,5 +150,3 @@
     </script>
 </body>
 </html>
-
-
