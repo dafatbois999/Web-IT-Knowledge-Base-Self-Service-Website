@@ -5,20 +5,22 @@ const noResult = document.getElementById('noResult');
 const loader = document.getElementById('loader');
 const userId = localStorage.getItem('user_id');
 
-// ตัวแปร Pagination - บทความ
 let allArticlesData = [];       // เก็บข้อมูลบทความทั้งหมด
 let filteredArticles = [];      // เก็บข้อมูลที่ผ่านการกรอง (Search/Category)
-let currentArticlePage = 1;
-const articlesPerPage = 6;      // จำนวนบทความต่อหน้า
 
-// ตัวแปร Pagination - คอร์ส
-let currentCoursePage = 1;
-const coursesPerPage = 6;       // จำนวนคอร์สต่อหน้า
+// ฟังก์ชันสำหรับเลื่อน Slider ซ้าย-ขวา
+window.scrollCarousel = (containerId, direction) => {
+    const container = document.getElementById(containerId);
+    if (container && container.firstElementChild) {
+        // เลื่อนทีละ 1 การ์ด + ช่องว่าง
+        const cardWidth = container.firstElementChild.offsetWidth + 24; 
+        container.scrollBy({ left: cardWidth * direction, behavior: 'smooth' });
+    }
+};
 
 // =========================================================
-// PART 1: บทความ (Articles) - Client-side Pagination
+// PART 1: บทความ (Articles)
 // =========================================================
-
 async function loadArticles() {
     try {
         const { data, error } = await supabase
@@ -30,9 +32,8 @@ async function loadArticles() {
         if (error) throw error;
         
         allArticlesData = data || [];
-        filteredArticles = allArticlesData; // เริ่มต้นโชว์ทั้งหมด
-        
-        renderArticles(); // แสดงผลหน้าแรก
+        filteredArticles = allArticlesData; 
+        renderArticles(); 
 
     } catch (err) {
         console.error(err);
@@ -41,37 +42,18 @@ async function loadArticles() {
     }
 }
 
-// ฟังก์ชันเปลี่ยนหน้าบทความ
-window.changeArticlePage = (direction) => {
-    const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
-    const newPage = currentArticlePage + direction;
-
-    if (newPage >= 1 && newPage <= totalPages) {
-        currentArticlePage = newPage;
-        renderArticles();
-    }
-};
-
 function renderArticles() {
     if(!grid) return;
     grid.innerHTML = '';
 
-    // ถ้าไม่มีข้อมูล
     if (filteredArticles.length === 0) {
         if(noResult) noResult.classList.remove('d-none');
-        document.getElementById('articlePagination').classList.add('d-none');
         return;
     } else {
         if(noResult) noResult.classList.add('d-none');
     }
 
-    // คำนวณ Slice ข้อมูลตามหน้า
-    const start = (currentArticlePage - 1) * articlesPerPage;
-    const end = start + articlesPerPage;
-    const pageData = filteredArticles.slice(start, end);
-
-    // วนลูปสร้างการ์ด
-    pageData.forEach((item, index) => {
+    filteredArticles.forEach((item, index) => {
         const imgHTML = item.image_url 
             ? `<img src="${item.image_url}" class="card-img-top" loading="lazy" style="height:200px; object-fit:cover;">`
             : `<div class="bg-light d-flex align-items-center justify-content-center text-secondary" style="height:200px;"><i class="bi bi-image fs-1 opacity-25"></i></div>`;
@@ -81,8 +63,9 @@ function renderArticles() {
         if (item.category === 'Network') badgeColor = 'bg-success';
         if (item.category === 'Software') badgeColor = 'bg-info text-dark';
 
+        // [เปลี่ยน] คลาสจาก col-md-4 เป็น carousel-item-card
         grid.innerHTML += `
-        <div class="col-md-4 fade-in">
+        <div class="carousel-item-card fade-in" style="animation-delay: ${index * 0.05}s">
             <a href="article.html?id=${item.id}" class="text-decoration-none text-dark">
                 <div class="card card-hover h-100 shadow-sm border-0">
                     ${imgHTML}
@@ -100,27 +83,6 @@ function renderArticles() {
             </a>
         </div>`;
     });
-
-    // อัปเดตปุ่ม Pagination บทความ
-    updateArticlePaginationUI();
-}
-
-function updateArticlePaginationUI() {
-    const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
-    const paginationBox = document.getElementById('articlePagination');
-    const indicator = document.getElementById('articlePageIndicator');
-    const btnPrev = document.getElementById('btnArtPrev');
-    const btnNext = document.getElementById('btnArtNext');
-
-    if (totalPages <= 1) {
-        paginationBox.classList.add('d-none');
-    } else {
-        paginationBox.classList.remove('d-none');
-        indicator.innerText = `${currentArticlePage} / ${totalPages}`;
-        
-        btnPrev.disabled = currentArticlePage === 1;
-        btnNext.disabled = currentArticlePage === totalPages;
-    }
 }
 
 // Search Logic (กรองบทความ)
@@ -128,13 +90,11 @@ const mainSearchInput = document.getElementById('searchInput');
 if (mainSearchInput) {
     mainSearchInput.addEventListener('input', (e) => {
         const txt = e.target.value.toLowerCase().trim();
-        // กรองจากข้อมูลทั้งหมด
         filteredArticles = allArticlesData.filter(item => 
             (item.title && item.title.toLowerCase().includes(txt)) ||
             (item.content && item.content.toLowerCase().includes(txt)) ||
             (item.category && item.category.toLowerCase().includes(txt))
         );
-        currentArticlePage = 1; // รีเซ็ตไปหน้า 1
         renderArticles();
     });
 }
@@ -149,47 +109,31 @@ window.toggleSearch = () => {
 };
 
 window.filterCat = (cat) => {
-    // เปลี่ยนสีปุ่ม
     document.querySelectorAll('.btn-light').forEach(btn => btn.classList.remove('active', 'fw-bold'));
     document.getElementById(`btn${cat}`)?.classList.add('active', 'fw-bold');
     
-    // กรองข้อมูล
     if (cat === 'All') {
         filteredArticles = allArticlesData;
     } else {
         filteredArticles = allArticlesData.filter(item => item.category === cat);
     }
-    currentArticlePage = 1; // รีเซ็ตไปหน้า 1
     renderArticles();
 };
 
 
 // =========================================================
-// PART 2: คอร์สเรียน (Courses) - Server-side Pagination
+// PART 2: คอร์สเรียน (Courses)
 // =========================================================
-
-// ฟังก์ชันเปลี่ยนหน้าคอร์ส
-window.changeCoursePage = (direction) => {
-    currentCoursePage += direction;
-    loadCourses(currentCoursePage);
-};
-
-async function loadCourses(page = 1) {
+async function loadCourses() {
     const courseGrid = document.getElementById('courseListContainer');
-    const paginationBox = document.getElementById('coursePagination');
-    
     if (!courseGrid) return;
 
-    // คำนวณช่วงข้อมูล (Range)
-    const from = (page - 1) * coursesPerPage;
-    const to = from + coursesPerPage - 1;
-
-    // ดึงข้อมูล + จำนวนรวม
-    const { data: courses, count, error } = await supabase
+    // โหลดคอร์สล่าสุดมาแสดงสัก 15 คอร์ส (ให้มีไว้เลื่อนซ้ายขวา)
+    const { data: courses, error } = await supabase
         .from('courses')
-        .select('*, users(full_name)', { count: 'exact' }) 
+        .select('*, users(full_name)') 
         .order('created_at', { ascending: false })
-        .range(from, to);
+        .limit(15); 
 
     if (error) {
         console.error(error);
@@ -198,8 +142,7 @@ async function loadCourses(page = 1) {
     }
 
     if (!courses || courses.length === 0) {
-        courseGrid.innerHTML = '<div class="col-12 text-center text-muted py-5">ยังไม่มีคอร์สเรียนในขณะนี้</div>';
-        if(paginationBox) paginationBox.classList.add('d-none');
+        courseGrid.innerHTML = '<div class="col-12 text-center text-muted py-5 w-100">ยังไม่มีคอร์สเรียนในขณะนี้</div>';
         return;
     }
 
@@ -209,7 +152,6 @@ async function loadCourses(page = 1) {
         const img = c.thumbnail_url || 'https://via.placeholder.com/400x225?text=Course';
         const teacherName = c.users?.full_name || 'Teacher';
         
-        // เช็ค Progress
         let isCompleted = false;
         if (userId) {
             const { count: totalLessons } = await supabase.from('lessons').select('*', { count: 'exact', head: true }).eq('course_id', c.id);
@@ -223,12 +165,12 @@ async function loadCourses(page = 1) {
         const btnClass = isCompleted ? 'btn-outline-success' : 'btn-outline-primary';
         const btnText = isCompleted ? 'เรียนจบแล้ว' : 'เข้าเรียนทันที';
 
+        // [เปลี่ยน] คลาสจาก col-md-4 เป็น carousel-item-card
         courseGrid.innerHTML += `
-            <div class="col-md-4 fade-in">
+            <div class="carousel-item-card fade-in">
                 <div class="card h-100 shadow-sm border-0 card-hover">
                     <img src="${img}" class="card-img-top" style="height: 180px; object-fit: cover;">
                     <div class="card-body d-flex flex-column">
-                        
                         <div class="mb-2 d-flex justify-content-between align-items-center">
                             <span class="badge bg-light text-secondary border">${c.category || 'General'}</span>
                             <span class="badge bg-dark opacity-75" style="font-size: 0.75rem;">ID: ${c.id}</span>
@@ -249,36 +191,8 @@ async function loadCourses(page = 1) {
             </div>
         `;
     }
-
-    // อัปเดต UI ปุ่มเปลี่ยนหน้าคอร์ส
-    if(paginationBox) {
-        paginationBox.classList.remove('d-none');
-        const btnPrev = document.getElementById('btnCoursePrev');
-        const btnNext = document.getElementById('btnCourseNext');
-        const pageIndicator = document.getElementById('coursePageIndicator');
-
-        pageIndicator.innerText = `หน้า ${currentCoursePage}`;
-
-        // ปุ่มก่อนหน้า
-        if (currentCoursePage === 1) {
-            btnPrev.disabled = true;
-            btnPrev.classList.add('disabled');
-        } else {
-            btnPrev.disabled = false;
-            btnPrev.classList.remove('disabled');
-        }
-
-        // ปุ่มถัดไป
-        if (to + 1 >= count) {
-            btnNext.disabled = true;
-            btnNext.classList.add('disabled');
-        } else {
-            btnNext.disabled = false;
-            btnNext.classList.remove('disabled');
-        }
-    }
 }
 
 // เริ่มทำงาน
 loadArticles();
-loadCourses(1);
+loadCourses();
