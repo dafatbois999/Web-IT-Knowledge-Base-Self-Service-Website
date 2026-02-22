@@ -51,9 +51,10 @@ function renderLoggedInState(name, role) {
         roleBadge = '<span class="badge bg-primary ms-2">TEACHER</span>';
         menuLink = `<li><a href="teacher.html" class="dropdown-item text-primary fw-bold"><i class="bi bi-mortarboard"></i> จัดการคอร์สเรียน</a></li>`;
     }
-    // Student
+    // Student -> ไปหน้าคอร์สเรียนของฉัน [อัปเดตใหม่ตรงนี้]
     else {
         roleBadge = '<span class="badge bg-secondary ms-2">STUDENT</span>';
+        menuLink = `<li><a href="student.html" class="dropdown-item text-primary fw-bold"><i class="bi bi-book-half"></i> คอร์สเรียนของฉัน</a></li>`;
     }
 
     authSection.innerHTML = `
