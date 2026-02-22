@@ -88,3 +88,54 @@ body.dark-mode .search-box-hidden input {
     color: #fff !important;
 }
 body.dark-mode .loading-overlay { background-color: #121212; }
+
+/* ================= CAROUSEL / SLIDER ================= */
+.carousel-wrapper {
+    position: relative;
+    padding: 0 10px;
+}
+
+.carousel-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;  /* ซ่อน Scrollbar (IE/Edge) */
+    scrollbar-width: none;     /* ซ่อน Scrollbar (Firefox) */
+    padding: 15px 5px;
+    scroll-snap-type: x mandatory;
+}
+
+.carousel-container::-webkit-scrollbar {
+    display: none; /* ซ่อน Scrollbar (Chrome/Safari/Opera) */
+}
+
+.carousel-item-card {
+    /* แสดงผล 3 การ์ดพอดี โดยหักลบกับ gap-4 (24px) */
+    flex: 0 0 calc(33.333% - 16px); 
+    max-width: calc(33.333% - 16px);
+    scroll-snap-align: start;
+}
+
+/* ปุ่มเลื่อนซ้าย-ขวา */
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 45px;
+    height: 45px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.carousel-btn.left { left: -15px; }
+.carousel-btn.right { right: -15px; }
+
+/* โหมด Responsive (มือถือ/แท็บเล็ต) */
+@media (max-width: 992px) {
+    .carousel-item-card { flex: 0 0 calc(50% - 12px); max-width: calc(50% - 12px); } /* 2 การ์ด */
+}
+@media (max-width: 576px) {
+    .carousel-item-card { flex: 0 0 100%; max-width: 100%; } /* 1 การ์ด */
+}
