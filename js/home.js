@@ -228,12 +228,25 @@ async function loadCourses(page = 1) {
                 <div class="card h-100 shadow-sm border-0 card-hover">
                     <img src="${img}" class="card-img-top" style="height: 180px; object-fit: cover;">
                     <div class="card-body d-flex flex-column">
-                        <div class="mb-2">
-                            <span class="badge bg-light text-secondary border">${c.category || 'G'}</span>
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <span class="badge bg-light text-secondary border">${c.category || 'General'}</span>
+                            <span class="badge bg-dark opacity-75" style="font-size: 0.75rem;">ID: ${c.id}</span>
                         </div>
+                        
                         <h5 class="fw-bold text-truncate">${c.title}</h5>
                         <p class="small text-muted mb-2">โดย: ${teacherName}</p>
                         <p class="card-text small text-secondary text-truncate-2 flex-grow-1">${c.description || '-'}</p>
+                        
+                        <div class="d-flex align-items-center mt-3">
+                            <a href="classroom.html?id=${c.id}" class="btn ${btnClass} w-100 rounded-pill">
+                                ${btnText}
+                            </a>
+                            ${checkMark}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
                         
                         <div class="d-flex align-items-center mt-3">
                             <a href="classroom.html?id=${c.id}" class="btn ${btnClass} w-100 rounded-pill">
@@ -279,4 +292,5 @@ async function loadCourses(page = 1) {
 // เริ่มทำงาน
 loadArticles();
 loadCourses(1);
+
 
