@@ -36,6 +36,11 @@ async function initClassroom() {
         allLessons = lessons || [];
 
         if (userId) {
+            // [อัปเดตใหม่] บันทึกประวัติว่านักเรียนเคยกดเข้ามาเรียนคอร์สนี้
+            // ถ้าเคยมีอยู่แล้ว Supabase จะคืนค่า Error ให้เราเพิกเฉยได้เพราะตั้งค่า UNIQUE ไว้
+            await supabase.from('enrollments').insert({ user_id: userId, course_id: courseId }).catch(() => {});
+
+            // ดึงข้อมูล Progress (สอบและติ๊กถูก)
             const { data: progress } = await supabase
                 .from('student_progress')
                 .select('lesson_id, quiz_data') 
