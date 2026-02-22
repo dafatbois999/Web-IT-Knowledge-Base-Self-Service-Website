@@ -8,15 +8,60 @@ const userId = localStorage.getItem('user_id');
 let allArticlesData = [];       // เก็บข้อมูลบทความทั้งหมด
 let filteredArticles = [];      // เก็บข้อมูลที่ผ่านการกรอง (Search/Category)
 
-// ฟังก์ชันสำหรับเลื่อน Slider ซ้าย-ขวา
+// =========================================================
+// ระบบเลื่อนม้าหมุนอัตโนมัติ (Auto-scroll)
+// =========================================================
+let autoScrollTimers = {};
+
 window.scrollCarousel = (containerId, direction) => {
     const container = document.getElementById(containerId);
     if (container && container.firstElementChild) {
-        // เลื่อนทีละ 1 การ์ด + ช่องว่าง
         const cardWidth = container.firstElementChild.offsetWidth + 24; 
         container.scrollBy({ left: cardWidth * direction, behavior: 'smooth' });
+        
+        // หากผู้ใช้กดปุ่มเลื่อนเอง ให้รีเซ็ตเวลานับถอยหลังใหม่
+        resetAutoScroll(containerId); 
     }
 };
+
+function startAutoScroll(containerId) {
+    clearInterval(autoScrollTimers[containerId]); // ล้างเวลาเก่าทิ้งก่อน
+    autoScrollTimers[containerId] = setInterval(() => {
+        const container = document.getElementById(containerId);
+        if (!container || !container.firstElementChild) return;
+        
+        // เช็คว่าสกอร์ลเลื่อนไปจนสุดขอบขวาหรือยัง (ลบ 10px เผื่อความคลาดเคลื่อนของทศนิยม)
+        const isAtEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth - 10;
+        
+        if (isAtEnd) {
+            // ถ้าเลื่อนจนสุดแล้ว ให้ตีกลับไปตำแหน่งแรกสุด
+            container.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            // ถ้ายังไม่สุด ให้เลื่อนไปขวา 1 การ์ด
+            const cardWidth = container.firstElementChild.offsetWidth + 24;
+            container.scrollBy({ left: cardWidth, behavior: 'smooth' });
+        }
+    }, 10000); // 10000 มิลลิวินาที = 10 วินาที
+}
+
+function resetAutoScroll(containerId) {
+    startAutoScroll(containerId);
+}
+
+// ฟังก์ชันเพิ่ม Event เมื่อเอาเมาส์ชี้ ให้หยุดเลื่อนชั่วคราว
+function setupAutoScrollEvents(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Desktop: เมาส์ชี้หยุด, เมาส์ออกเลื่อนต่อ
+    container.addEventListener('mouseenter', () => clearInterval(autoScrollTimers[containerId]));
+    container.addEventListener('mouseleave', () => startAutoScroll(containerId));
+    
+    // Mobile: เอานิ้วแตะหยุด, เอานิ้วออกเลื่อนต่อ
+    container.addEventListener('touchstart', () => clearInterval(autoScrollTimers[containerId]), {passive: true});
+    container.addEventListener('touchend', () => startAutoScroll(containerId));
+}
+
 
 // =========================================================
 // PART 1: บทความ (Articles)
@@ -63,7 +108,6 @@ function renderArticles() {
         if (item.category === 'Network') badgeColor = 'bg-success';
         if (item.category === 'Software') badgeColor = 'bg-info text-dark';
 
-        // [เปลี่ยน] คลาสจาก col-md-4 เป็น carousel-item-card
         grid.innerHTML += `
         <div class="carousel-item-card fade-in" style="animation-delay: ${index * 0.05}s">
             <a href="article.html?id=${item.id}" class="text-decoration-none text-dark">
@@ -83,6 +127,9 @@ function renderArticles() {
             </a>
         </div>`;
     });
+
+    // เริ่มทำงาน Auto-scroll ให้ฝั่งบทความ
+    startAutoScroll('grid');
 }
 
 // Search Logic (กรองบทความ)
@@ -128,7 +175,6 @@ async function loadCourses() {
     const courseGrid = document.getElementById('courseListContainer');
     if (!courseGrid) return;
 
-    // โหลดคอร์สล่าสุดมาแสดงสัก 15 คอร์ส (ให้มีไว้เลื่อนซ้ายขวา)
     const { data: courses, error } = await supabase
         .from('courses')
         .select('*, users(full_name)') 
@@ -165,7 +211,6 @@ async function loadCourses() {
         const btnClass = isCompleted ? 'btn-outline-success' : 'btn-outline-primary';
         const btnText = isCompleted ? 'เรียนจบแล้ว' : 'เข้าเรียนทันที';
 
-        // [เปลี่ยน] คลาสจาก col-md-4 เป็น carousel-item-card
         courseGrid.innerHTML += `
             <div class="carousel-item-card fade-in">
                 <div class="card h-100 shadow-sm border-0 card-hover">
@@ -191,8 +236,17 @@ async function loadCourses() {
             </div>
         `;
     }
+
+    // เริ่มทำงาน Auto-scroll ให้ฝั่งคอร์ส
+    startAutoScroll('courseListContainer');
 }
 
-// เริ่มทำงาน
+// =========================================================
+// เริ่มทำงานเมื่อโหลดไฟล์
+// =========================================================
 loadArticles();
 loadCourses();
+
+// ติดตั้ง Event ล่วงหน้า (สำหรับหยุดเวลาเอาเมาส์ชี้)
+setupAutoScrollEvents('grid');
+setupAutoScrollEvents('courseListContainer');
