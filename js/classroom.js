@@ -19,10 +19,15 @@ initClassroom();
 
 async function initClassroom() {
     try {
-        const { data: course } = await supabase.from('courses').select('title').eq('id', courseId).single();
+        // [แก้ไข] ดึงยอด view เดิมออกมาด้วย
+        const { data: course } = await supabase.from('courses').select('title, views').eq('id', courseId).single();
         if (course) {
             document.getElementById('courseName').innerText = course.title;
             document.title = `${course.title} - ห้องเรียนออนไลน์`;
+
+            // [เพิ่มใหม่] สั่งอัปเดตยอด view บวก 1 ทันทีเมื่อโหลดหน้าห้องเรียน
+            const newViews = (course.views || 0) + 1;
+            supabase.from('courses').update({ views: newViews }).eq('id', courseId).then();
         }
 
         const { data: lessons, error } = await supabase
@@ -36,7 +41,7 @@ async function initClassroom() {
         allLessons = lessons || [];
 
         if (userId) {
-            // [แก้บัคเว็บค้างตรงนี้!] ลบคำสั่งที่ทำให้พังออกไปแล้ว
+            // บันทึกประวัติการเข้าเรียน
             await supabase.from('enrollments').insert({ user_id: userId, course_id: courseId });
 
             const { data: progress } = await supabase
