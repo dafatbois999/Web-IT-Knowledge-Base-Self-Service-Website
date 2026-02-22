@@ -162,7 +162,7 @@ document.getElementById('insertImgFile')?.addEventListener('change', async (e) =
 
 
 // ==========================================
-// 3. USER MANAGEMENT (LMS System) - [UPDATED]
+// 3. USER MANAGEMENT (LMS System)
 // ==========================================
 
 let currentUserFilter = 'all'; 
@@ -209,7 +209,6 @@ window.loadUsers = async function() {
             actionBtn = `<button onclick="toggleRole(${u.id}, 'student')" class="btn btn-sm btn-outline-warning fw-bold">⬇ ปรับเป็นนักเรียน</button>`;
         }
 
-        // เพิ่มปุ่มลบ (Delete) สีแดง
         let deleteBtn = `<button onclick="deleteUser(${u.id}, '${u.username}')" class="btn btn-sm btn-outline-danger ms-2" title="ลบผู้ใช้"><i class="bi bi-trash-fill"></i></button>`;
 
         tbody.innerHTML += `
@@ -235,16 +234,15 @@ window.toggleRole = async (id, newRole) => {
     }
 }
 
-// [เพิ่มใหม่] ฟังก์ชันลบ User
+// ฟังก์ชันลบ User
 window.deleteUser = async (id, name) => {
     if(confirm(`⚠️ คำเตือน: คุณต้องการลบผู้ใช้ "${name}" ใช่หรือไม่?\nการกระทำนี้ไม่สามารถย้อนกลับได้!`)) {
         const { error } = await supabase.from('users').delete().eq('id', id);
-        
         if(error) {
             alert('ลบไม่สำเร็จ: ' + error.message);
         } else {
             alert('ลบผู้ใช้เรียบร้อยแล้ว');
-            loadUsers(); // รีโหลดตาราง
+            loadUsers();
         }
     }
 }
@@ -268,7 +266,6 @@ window.loadCoursesAdmin = async function() {
         return;
     }
 
-    // อัปเดตตัวเลขใน Dashboard
     if (courses) {
         document.getElementById('courseCount').innerText = courses.length;
     }
@@ -287,7 +284,8 @@ window.loadCoursesAdmin = async function() {
                 <td class="ps-4 fw-bold text-dark text-truncate" style="max-width: 300px;">${c.title}</td>
                 <td>${teacherName}</td>
                 <td class="text-end pe-4">
-                    <a href="classroom.html?id=${c.id}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> ดู</a>
+                    <button onclick="viewProgress(${c.id}, '${c.title.replace(/'/g, "\\'")}')" class="btn btn-sm btn-outline-info fw-bold"><i class="bi bi-bar-chart-fill"></i> ผลการเรียน</button>
+                    <a href="classroom.html?id=${c.id}" target="_blank" class="btn btn-sm btn-outline-primary ms-1"><i class="bi bi-eye"></i> ดู</a>
                     <button onclick="delCourse(${c.id})" class="btn btn-sm btn-outline-danger ms-1"><i class="bi bi-trash"></i> ลบ</button>
                 </td>
             </tr>
@@ -302,3 +300,63 @@ window.delCourse = async (id) => {
         else loadCoursesAdmin(); 
     }
 }
+
+// ==========================================
+// 5. ดูผลการเรียน (Progress Report)
+// ==========================================
+window.viewProgress = async (courseId, courseTitle) => {
+    document.getElementById('progressCourseTitle').innerText = `คอร์ส: ${courseTitle}`;
+    const tbody = document.getElementById('progressTableBody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>';
+    
+    new bootstrap.Modal(document.getElementById('progressModal')).show();
+
+    try {
+        const { count: totalLessons } = await supabase.from('lessons').select('*', { count: 'exact', head: true }).eq('course_id', courseId);
+        if (totalLessons === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-warning py-4">คอร์สนี้ยังไม่มีบทเรียนให้เรียน</td></tr>';
+            return;
+        }
+
+        const { data: progressData } = await supabase.from('student_progress').select('user_id').eq('course_id', courseId);
+        
+        const progressCount = {};
+        if (progressData) {
+            progressData.forEach(p => { progressCount[p.user_id] = (progressCount[p.user_id] || 0) + 1; });
+        }
+        
+        const userIds = Object.keys(progressCount);
+        if (userIds.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">ยังไม่มีผู้เข้าเรียนในคอร์สนี้</td></tr>';
+            return;
+        }
+
+        const { data: users } = await supabase.from('users').select('id, full_name, username, employee_id, department').in('id', userIds);
+
+        tbody.innerHTML = '';
+        users.forEach(u => {
+            const completed = progressCount[u.id] || 0;
+            const percent = Math.round((completed / totalLessons) * 100);
+            const statusBadge = percent >= 100 ? '<span class="badge bg-success">เรียนจบแล้ว</span>' : '<span class="badge bg-warning text-dark">กำลังเรียน</span>';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${u.full_name || u.username}</td>
+                    <td>${u.employee_id || '-'}</td>
+                    <td>${u.department || '-'}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div class="progress-bar bg-${percent >= 100 ? 'success' : 'primary'}" style="width: ${percent}%"></div>
+                            </div>
+                            <small class="text-muted fw-bold">${percent}%</small>
+                        </div>
+                    </td>
+                    <td>${statusBadge}</td>
+                </tr>
+            `;
+        });
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
+    }
+};
