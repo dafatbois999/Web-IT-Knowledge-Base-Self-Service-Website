@@ -1,19 +1,14 @@
 import { supabase } from './supabase-config.js';
 
-// Init Modal (Bootstrap 5)
 const authModalElement = document.getElementById('authModal');
 const authModal = authModalElement ? new bootstrap.Modal(authModalElement) : null;
 
-// ===========================================
-// 1. ตรวจสอบสถานะเมื่อโหลดหน้าเว็บ
-// ===========================================
 checkLoginStatus();
 
 async function checkLoginStatus() {
     const userId = localStorage.getItem('user_id');
     
     if (userId) {
-        // ดึงข้อมูลล่าสุดจาก DB เสมอ (เผื่อโดนเปลี่ยน Role จาก Admin)
         const { data: user, error } = await supabase
             .from('users')
             .select('role, full_name, username')
@@ -21,13 +16,11 @@ async function checkLoginStatus() {
             .single();
 
         if (user && !error) {
-            // อัปเดตข้อมูลใน LocalStorage
             localStorage.setItem('user_role', user.role);
             localStorage.setItem('user_name', user.full_name || user.username);
             renderLoggedInState(user.full_name || user.username, user.role);
         } else {
-            // ถ้าหาไม่เจอใน DB (โดนลบ) ให้เคลียร์ค่าทิ้ง
-            logout(false); // logout แบบไม่ถาม
+            logout(false); 
         }
     } else {
         renderLoggedOutState();
@@ -46,15 +39,18 @@ function renderLoggedInState(name, role) {
         roleBadge = '<span class="badge bg-dark ms-2">ADMIN</span>';
         menuLink = `<li><a href="admin.html" class="dropdown-item text-danger fw-bold"><i class="bi bi-shield-lock"></i> ไปหน้า Admin</a></li>`;
     } 
-    // Teacher -> ไปหน้าจัดการคอร์ส
+    // Teacher -> ไปหน้าจัดการคอร์ส + เพิ่มปุ่มดูคอร์สของฉันให้ Teacher ด้วย
     else if (role === 'teacher') {
         roleBadge = '<span class="badge bg-primary ms-2">TEACHER</span>';
-        menuLink = `<li><a href="teacher.html" class="dropdown-item text-primary fw-bold"><i class="bi bi-mortarboard"></i> จัดการคอร์สเรียน</a></li>`;
+        menuLink = `
+            <li><a href="teacher.html" class="dropdown-item text-primary fw-bold"><i class="bi bi-mortarboard"></i> จัดการคอร์สเรียน</a></li>
+            <li><a href="student.html" class="dropdown-item text-success fw-bold"><i class="bi bi-book-half"></i> คอร์สเรียนของฉัน</a></li>
+        `;
     }
-    // Student -> ไปหน้าคอร์สเรียนของฉัน [อัปเดตใหม่ตรงนี้]
+    // Student -> ไปหน้าคอร์สของฉัน
     else {
         roleBadge = '<span class="badge bg-secondary ms-2">STUDENT</span>';
-        menuLink = `<li><a href="student.html" class="dropdown-item text-primary fw-bold"><i class="bi bi-book-half"></i> คอร์สเรียนของฉัน</a></li>`;
+        menuLink = `<li><a href="student.html" class="dropdown-item text-success fw-bold"><i class="bi bi-book-half"></i> คอร์สเรียนของฉัน</a></li>`;
     }
 
     authSection.innerHTML = `
@@ -86,9 +82,6 @@ window.openAuthModal = () => {
     if (authModal) authModal.show();
 }
 
-// ===========================================
-// 2. ระบบล็อกอิน (LOGIN)
-// ===========================================
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
@@ -113,15 +106,12 @@ if (loginForm) {
             btn.innerText = oldText;
             btn.disabled = false;
         } else {
-            // Login สำเร็จ
             localStorage.setItem('user_id', data.id);
             localStorage.setItem('user_role', data.role);
             localStorage.setItem('user_name', data.full_name || data.username);
             
             if (authModal) authModal.hide();
 
-            // Redirect ตาม Role
-            console.log("Login Success! Role:", data.role);
             if (data.role === 'teacher') {
                 window.location.href = 'teacher.html'; 
             } else if (data.role === 'admin') {
@@ -133,9 +123,6 @@ if (loginForm) {
     });
 }
 
-// ===========================================
-// 3. ระบบสมัครสมาชิก (REGISTER)
-// ===========================================
 const regForm = document.getElementById('regForm');
 if (regForm) {
     regForm.addEventListener('submit', async (e) => {
@@ -144,21 +131,18 @@ if (regForm) {
         const username = document.getElementById('regUser').value.trim();
         const password = document.getElementById('regPass').value.trim();
         const fullName = document.getElementById('regName').value.trim();
-        const empId = document.getElementById('regEmpId').value.trim(); // ดึงค่ารหัสพนักงาน
-        const dept = document.getElementById('regDept').value.trim();   // ดึงค่าแผนก
+        const empId = document.getElementById('regEmpId').value.trim(); 
+        const dept = document.getElementById('regDept').value.trim();   
         const btn = e.target.querySelector('button');
 
-        // 1. เช็คว่ากรอกครบไหม
         if (!username || !password || !fullName || !empId || !dept) {
             return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
         }
 
-        // 2. เช็ครหัสผ่านต้อง 8 ตัวอักษรขึ้นไป
         if (password.length < 8) {
             return alert('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร');
         }
 
-        // 3. เช็ครหัสพนักงานต้อง 8 หลักพอดี
         if (empId.length !== 8) {
             return alert('รหัสพนักงานต้องมี 8 ตัวอักษรพอดี');
         }
@@ -168,7 +152,6 @@ if (regForm) {
         btn.disabled = true;
 
         try {
-            // เช็คว่า Username นี้มีหรือยัง
             const { data: existingUser, error: checkError } = await supabase
                 .from('users')
                 .select('id')
@@ -180,7 +163,6 @@ if (regForm) {
                 return;
             }
 
-            // เช็คว่า รหัสพนักงาน นี้ลงทะเบียนไปหรือยัง (Optional: ป้องกันการสมัครซ้ำ)
             const { data: existingEmp } = await supabase
                 .from('users')
                 .select('id')
@@ -192,15 +174,14 @@ if (regForm) {
                 return;
             }
 
-            // ถ้าทุกอย่างผ่าน ให้บันทึกลง Database
             const { error: insertError } = await supabase
                 .from('users')
                 .insert({ 
                     username: username, 
                     password: password, 
                     full_name: fullName, 
-                    employee_id: empId,   // เพิ่มฟิลด์รหัสพนักงาน
-                    department: dept,     // เพิ่มฟิลด์แผนก
+                    employee_id: empId,   
+                    department: dept,     
                     role: 'student' 
                 });
 
@@ -208,7 +189,6 @@ if (regForm) {
 
             alert('✅ สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
             
-            // สลับไปหน้า Login
             const loginTabBtn = document.querySelector('a[href="#tabLogin"]');
             if(loginTabBtn) loginTabBtn.click();
             
@@ -224,9 +204,6 @@ if (regForm) {
     });
 }
 
-// ===========================================
-// 4. LOGOUT
-// ===========================================
 window.logout = (confirmLogout = true) => {
     if(!confirmLogout || confirm('ยืนยันออกจากระบบ?')) {
         localStorage.removeItem('user_id');
