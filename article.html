@@ -35,9 +35,12 @@
                     </div>
                     <div class="tab-pane fade" id="tabRegister">
                         <form id="regForm">
-                            <input type="text" id="regUser" class="form-control mb-2" placeholder="ตั้งชื่อผู้ใช้ (ภาษาอังกฤษ)" required>
-                            <input type="password" id="regPass" class="form-control mb-2" placeholder="ตั้งรหัสผ่าน" required>
-                            <input type="text" id="regName" class="form-control mb-3" placeholder="ชื่อ-นามสกุล" required>
+                            <input type="text" id="regUser" class="form-control mb-2" placeholder="ตั้งชื่อผู้ใช้ (Username)" required>
+                            <input type="password" id="regPass" class="form-control mb-2" placeholder="ตั้งรหัสผ่าน (อย่างน้อย 8 ตัวอักษร)" minlength="8" required>
+                            <input type="text" id="regName" class="form-control mb-2" placeholder="ชื่อ-นามสกุล" required>
+                            <input type="text" id="regEmpId" class="form-control mb-2" placeholder="รหัสพนักงาน (8 หลัก)" maxlength="8" required>
+                            <input type="text" id="regDept" class="form-control mb-3" placeholder="แผนก" required>
+                            
                             <div class="alert alert-info py-2 small mb-3"><i class="bi bi-info-circle"></i> สมัครแล้วจะเป็น <b>นักเรียน (Student)</b> ทันที</div>
                             <button type="submit" class="btn btn-success w-100 fw-bold rounded-pill">ยืนยันการสมัคร</button>
                         </form>
@@ -134,3 +137,4 @@
     </script>
 </body>
 </html>
+
