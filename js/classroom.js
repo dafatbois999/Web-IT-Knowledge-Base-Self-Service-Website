@@ -36,11 +36,9 @@ async function initClassroom() {
         allLessons = lessons || [];
 
         if (userId) {
-            // [อัปเดตใหม่] บันทึกประวัติว่านักเรียนเคยกดเข้ามาเรียนคอร์สนี้
-            // ถ้าเคยมีอยู่แล้ว Supabase จะคืนค่า Error ให้เราเพิกเฉยได้เพราะตั้งค่า UNIQUE ไว้
-            await supabase.from('enrollments').insert({ user_id: userId, course_id: courseId }).catch(() => {});
+            // [แก้บัคเว็บค้างตรงนี้!] ลบคำสั่งที่ทำให้พังออกไปแล้ว
+            await supabase.from('enrollments').insert({ user_id: userId, course_id: courseId });
 
-            // ดึงข้อมูล Progress (สอบและติ๊กถูก)
             const { data: progress } = await supabase
                 .from('student_progress')
                 .select('lesson_id, quiz_data') 
@@ -56,11 +54,14 @@ async function initClassroom() {
         }
 
         renderPlaylist();
-        updateProgressBar(false); // false = ไม่เด้ง popup ตอนโหลด
+        updateProgressBar(false); 
         if (allLessons.length > 0) loadLesson(0);
         else document.getElementById('playlist').innerHTML = '<div class="p-5 text-center text-muted">ยังไม่มีเนื้อหา</div>';
 
-    } catch (err) { console.error("Error:", err); }
+    } catch (err) { 
+        console.error("Error:", err); 
+        document.getElementById('lessonContent').innerHTML = `<div class="alert alert-danger mt-3">เกิดข้อผิดพลาดในการโหลดเนื้อหา: ${err.message}</div>`;
+    }
 }
 
 function renderPlaylist() {
@@ -103,7 +104,7 @@ window.toggleComplete = async (e, lessonId) => {
         await supabase.from('student_progress').insert({ user_id: userId, lesson_id: lessonId, course_id: courseId });
     }
     renderPlaylist();
-    updateProgressBar(true); // true = เช็ค popup
+    updateProgressBar(true); 
 };
 
 function updateProgressBar(isUpdate = false) {
@@ -297,7 +298,7 @@ window.submitQuiz = async () => {
                 user_id: userId, lesson_id: currentLesson.id, course_id: courseId, quiz_data: quizDataToSave
             });
             renderPlaylist(); 
-            updateProgressBar(true); // true = เช็ค popup
+            updateProgressBar(true);
         }
 
     } else {
