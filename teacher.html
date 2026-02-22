@@ -24,26 +24,23 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold text-dark">จัดการคอร์สเรียน</h2>
-                <p class="text-muted">สร้างและแก้ไขเนื้อหาบทเรียนของคุณได้ที่นี่</p>
+                <p class="text-muted">สร้างและแก้ไขเนื้อหาบทเรียนออนไลน์ของคุณ</p>
             </div>
-            <button onclick="openCreateModal()" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                <i class="bi bi-plus-lg"></i> สร้างคอร์สใหม่
+            <button onclick="openCreateModal()" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-circle-fill"></i> สร้างคอร์สใหม่
             </button>
         </div>
 
         <div class="row g-4" id="courseGrid">
-            <div class="col-12 text-center py-5 text-muted">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2">กำลังโหลดข้อมูล...</p>
-            </div>
+            <div class="col-12 text-center text-muted py-5">กำลังโหลดข้อมูล...</div>
         </div>
     </div>
 
-    <div id="createModal" class="modal fade" tabindex="-1">
+    <div class="modal fade" id="createModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
+            <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-book-half"></i> สร้างคอร์สใหม่</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus"></i> สร้างคอร์สใหม่</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -66,6 +63,7 @@
             </div>
         </div>
     </div>
+
     <div class="modal fade" id="progressModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
