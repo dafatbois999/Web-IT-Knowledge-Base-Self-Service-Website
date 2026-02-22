@@ -133,7 +133,7 @@ if (loginForm) {
 }
 
 // ===========================================
-// 3. ระบบสมัครสมาชิก (REGISTER) - [แก้ไข: เช็คชื่อซ้ำ]
+// 3. ระบบสมัครสมาชิก (REGISTER)
 // ===========================================
 const regForm = document.getElementById('regForm');
 if (regForm) {
@@ -143,10 +143,23 @@ if (regForm) {
         const username = document.getElementById('regUser').value.trim();
         const password = document.getElementById('regPass').value.trim();
         const fullName = document.getElementById('regName').value.trim();
+        const empId = document.getElementById('regEmpId').value.trim(); // ดึงค่ารหัสพนักงาน
+        const dept = document.getElementById('regDept').value.trim();   // ดึงค่าแผนก
         const btn = e.target.querySelector('button');
 
-        if (!username || !password || !fullName) {
+        // 1. เช็คว่ากรอกครบไหม
+        if (!username || !password || !fullName || !empId || !dept) {
             return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+        }
+
+        // 2. เช็ครหัสผ่านต้อง 8 ตัวอักษรขึ้นไป
+        if (password.length < 8) {
+            return alert('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร');
+        }
+
+        // 3. เช็ครหัสพนักงานต้อง 8 หลักพอดี
+        if (empId.length !== 8) {
+            return alert('รหัสพนักงานต้องมี 8 ตัวอักษรพอดี');
         }
 
         const oldText = btn.innerText;
@@ -154,7 +167,7 @@ if (regForm) {
         btn.disabled = true;
 
         try {
-            // 1. เช็คก่อนว่ามี Username นี้หรือยัง
+            // เช็คว่า Username นี้มีหรือยัง
             const { data: existingUser, error: checkError } = await supabase
                 .from('users')
                 .select('id')
@@ -163,17 +176,31 @@ if (regForm) {
 
             if (existingUser) {
                 alert('❌ ชื่อผู้ใช้ (Username) นี้ถูกใช้งานแล้ว กรุณาตั้งชื่อใหม่');
-                return; // หยุดการทำงาน
+                return;
             }
 
-            // 2. ถ้าไม่มีซ้ำ ให้บันทึก
+            // เช็คว่า รหัสพนักงาน นี้ลงทะเบียนไปหรือยัง (Optional: ป้องกันการสมัครซ้ำ)
+            const { data: existingEmp } = await supabase
+                .from('users')
+                .select('id')
+                .eq('employee_id', empId)
+                .maybeSingle(); 
+            
+            if (existingEmp) {
+                alert('❌ รหัสพนักงานนี้ถูกลงทะเบียนในระบบแล้ว');
+                return;
+            }
+
+            // ถ้าทุกอย่างผ่าน ให้บันทึกลง Database
             const { error: insertError } = await supabase
                 .from('users')
                 .insert({ 
                     username: username, 
                     password: password, 
                     full_name: fullName, 
-                    role: 'student' // default role
+                    employee_id: empId,   // เพิ่มฟิลด์รหัสพนักงาน
+                    department: dept,     // เพิ่มฟิลด์แผนก
+                    role: 'student' 
                 });
 
             if (insertError) throw insertError;
