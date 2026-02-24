@@ -106,11 +106,21 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
         const editId = document.getElementById('editId').value;
         const file = document.getElementById('inpImg').files[0];
         let imageUrl = null;
+        
         if (file) {
-            const fileName = Date.now() + '-' + file.name;
+            // [แก้ไข] เปลี่ยนชื่อไฟล์ให้เป็นภาษาอังกฤษเพื่อแก้ปัญหารูปไม่ขึ้น
+            const fileExt = file.name.split('.').pop();
+            const fileName = `article_img_${Date.now()}.${fileExt}`;
+            
             const { error } = await supabase.storage.from('images').upload(fileName, file);
-            if (!error) { const { data } = supabase.storage.from('images').getPublicUrl(fileName); imageUrl = data.publicUrl; }
+            if (!error) { 
+                const { data } = supabase.storage.from('images').getPublicUrl(fileName); 
+                imageUrl = data.publicUrl; 
+            } else {
+                throw error;
+            }
         }
+        
         const payload = {
             title: document.getElementById('inpTitle').value,
             category: document.getElementById('inpCat').value,
@@ -118,10 +128,19 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
             solution: document.getElementById('inpSol').value,
             video_url: document.getElementById('inpVid').value,
         };
+        
         if (imageUrl) payload.image_url = imageUrl;
-        if (editId) { await supabase.from('articles').update(payload).eq('id', editId); alert('แก้ไขเรียบร้อย'); }
-        else { payload.status = 'Published'; await supabase.from('articles').insert(payload); alert('เพิ่มสำเร็จ'); }
-        cancelEdit(); loadTable();
+        
+        if (editId) { 
+            await supabase.from('articles').update(payload).eq('id', editId); 
+            alert('แก้ไขเรียบร้อย'); 
+        } else { 
+            payload.status = 'Published'; 
+            await supabase.from('articles').insert(payload); 
+            alert('เพิ่มสำเร็จ'); 
+        }
+        cancelEdit(); 
+        loadTable();
     } catch (err) { alert('Error: ' + err.message); } 
     finally { btn.innerText = oldText; btn.disabled = false; }
 });
@@ -151,13 +170,23 @@ window.cancelEdit = () => {
 window.delItem = async (id) => {
     if(confirm('ยืนยันลบ?')) { await supabase.from('articles').delete().eq('id', id); loadTable(); }
 }
+
 document.getElementById('insertImgFile')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const fileName = `content_${Date.now()}_${file.name}`;
-    await supabase.storage.from('images').upload(fileName, file);
+    
+    // [แก้ไข] เปลี่ยนชื่อไฟล์ให้เป็นภาษาอังกฤษเพื่อแก้ปัญหารูปไม่ขึ้น
+    const fileExt = file.name.split('.').pop();
+    const fileName = `content_${Date.now()}.${fileExt}`;
+    
+    const { error } = await supabase.storage.from('images').upload(fileName, file);
+    if (error) {
+        alert('อัปโหลดรูปภาพล้มเหลว: ' + error.message);
+        return;
+    }
     const { data } = supabase.storage.from('images').getPublicUrl(fileName);
     document.getElementById('inpSol').value += `\n<img src="${data.publicUrl}" class="img-fluid rounded my-3 d-block mx-auto" style="max-height:300px;">\n`;
+    e.target.value = ''; // เคลียร์ค่า input
 });
 
 
